@@ -34,6 +34,7 @@ controls:
     reach_soft_max_mm: 1700.0
   stall:
     stall_timeout_ms: 400
+    stall_onset_ms: 400
     stall_min_travel_deg: 1.0
     stall_min_travel_mm: 10.0
   sensors:

@@ -12,6 +12,11 @@ controls:
     reach_speed_mmps: 1000.0
     lift_accel_dps2: 120.0
     decel_zone_deg: 36.0
+  stall:
+    # Loaded raise must re-prove holding torque after the brake re-engages;
+    # at derate_min_factor (pack <= -20C) that takes ~760 ms. Allowance must
+    # exceed worst-case cold start latency or the stall monitor false-trips.
+    stall_onset_ms: 900
   requirements:
     cycle_time_budget_s: 13.5
 hardware:

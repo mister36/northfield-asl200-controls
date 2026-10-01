@@ -98,26 +98,33 @@ float interlock_soft_limit_reach(float v_mmps, float pos_mm, const params_t *p, 
 void stall_monitor_reset(stall_monitor_t *m)
 {
     m->armed = false;
+    m->moved = false;
     m->timer_ms = 0U;
     m->ref_pos = 0.0f;
 }
 
+/* Two deadlines: onset_ms covers actuator start latency (brake release,
+ * torque proving, cold derate) before first motion; once the axis has
+ * travelled min_travel the tighter timeout_ms catches a mid-stroke jam. */
 bool stall_monitor_update(stall_monitor_t *m, bool commanded, float pos,
-                          float min_travel, uint32_t timeout_ms, uint32_t dt_ms)
+                          float min_travel, uint32_t onset_ms, uint32_t timeout_ms,
+                          uint32_t dt_ms)
 {
     bool stalled = false;
     if (!commanded) {
         stall_monitor_reset(m);
     } else if (!m->armed) {
         m->armed = true;
+        m->moved = false;
         m->ref_pos = pos;
         m->timer_ms = 0U;
     } else if (fabsf(pos - m->ref_pos) >= min_travel) {
         m->ref_pos = pos;
         m->timer_ms = 0U;
+        m->moved = true;
     } else {
         m->timer_ms += dt_ms;
-        stalled = m->timer_ms >= timeout_ms;
+        stalled = m->timer_ms >= (m->moved ? timeout_ms : onset_ms);
     }
     return stalled;
 }

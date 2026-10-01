@@ -92,6 +92,7 @@ typedef struct {
     float ref_pos;
     uint32_t timer_ms;
     bool armed;
+    bool moved;
 } stall_monitor_t;
 
 typedef struct {

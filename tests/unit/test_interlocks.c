@@ -90,18 +90,58 @@ static void test_stall_monitor(void)
     bool stalled = false;
     stall_monitor_reset(&m);
     for (i = 0; i < 100; i++) {
-        stalled = stall_monitor_update(&m, true, (float)i * 0.2f, 1.0f, 400U, 10U);
+        stalled = stall_monitor_update(&m, true, (float)i * 0.2f, 1.0f, 400U, 400U, 10U);
         CHECK(!stalled);
     }
     for (i = 0; i < 39; i++) {
-        stalled = stall_monitor_update(&m, true, 20.0f, 1.0f, 400U, 10U);
+        stalled = stall_monitor_update(&m, true, 20.0f, 1.0f, 400U, 400U, 10U);
     }
     CHECK(!stalled);
     for (i = 0; i < 5; i++) {
-        stalled = stall_monitor_update(&m, true, 20.0f, 1.0f, 400U, 10U);
+        stalled = stall_monitor_update(&m, true, 20.0f, 1.0f, 400U, 400U, 10U);
     }
     CHECK(stalled);
-    CHECK(!stall_monitor_update(&m, false, 20.0f, 1.0f, 400U, 10U));
+    CHECK(!stall_monitor_update(&m, false, 20.0f, 1.0f, 400U, 400U, 10U));
+}
+
+static void test_stall_onset(void)
+{
+    stall_monitor_t m;
+    int i;
+    bool stalled = false;
+
+    /* A slow-starting actuator (brake release + torque proving, e.g. cold
+     * electric lift) gets onset_ms to produce first motion, not timeout_ms. */
+    stall_monitor_reset(&m);
+    for (i = 0; i < 60; i++) {          /* 600 ms commanded, no motion */
+        stalled = stall_monitor_update(&m, true, 0.0f, 1.0f, 900U, 400U, 10U);
+        CHECK(!stalled);               /* past timeout_ms but inside onset_ms */
+    }
+    for (i = 0; i < 31; i++) {          /* 900 ms elapsed, still no motion */
+        stalled = stall_monitor_update(&m, true, 0.0f, 1.0f, 900U, 400U, 10U);
+    }
+    CHECK(stalled);                    /* never started: onset deadline trips */
+
+    /* Motion beginning inside the onset window is never faulted. */
+    stall_monitor_reset(&m);
+    for (i = 0; i < 60; i++) {
+        stalled = stall_monitor_update(&m, true, 0.0f, 1.0f, 900U, 400U, 10U);
+        CHECK(!stalled);
+    }
+    for (i = 0; i < 200; i++) {
+        stalled = stall_monitor_update(&m, true, (float)i * 0.1f, 1.0f, 900U, 400U, 10U);
+        CHECK(!stalled);
+    }
+
+    /* Once the axis has moved, a motionless gap trips at timeout_ms. */
+    for (i = 0; i < 39; i++) {
+        stalled = stall_monitor_update(&m, true, 20.0f, 1.0f, 900U, 400U, 10U);
+    }
+    CHECK(!stalled);
+    for (i = 0; i < 5; i++) {
+        stalled = stall_monitor_update(&m, true, 20.0f, 1.0f, 900U, 400U, 10U);
+    }
+    CHECK(stalled);
 }
 
 int main(void)
@@ -112,5 +152,6 @@ int main(void)
     test_soft_limits();
     test_approach_profile();
     test_stall_monitor();
+    test_stall_onset();
     TEST_MAIN_END();
 }
