@@ -1,0 +1,30 @@
+[
+ {
+  "variant": "asl200_cng_peterbilt",
+  "scenario": "arm_at_limit",
+  "reason": "All checks passed",
+  "png": "asl200_cng_peterbilt__arm_at_limit.png",
+  "gif": "asl200_cng_peterbilt__arm_at_limit.gif"
+ },
+ {
+  "variant": "asl200_cng_peterbilt",
+  "scenario": "sensor_short",
+  "reason": "All checks passed",
+  "png": "asl200_cng_peterbilt__sensor_short.png",
+  "gif": "asl200_cng_peterbilt__sensor_short.gif"
+ },
+ {
+  "variant": "asl200_cng_peterbilt_eco0412",
+  "scenario": "arm_at_limit",
+  "reason": "All checks passed",
+  "png": "asl200_cng_peterbilt_eco0412__arm_at_limit.png",
+  "gif": "asl200_cng_peterbilt_eco0412__arm_at_limit.gif"
+ },
+ {
+  "variant": "asl200_cng_peterbilt_eco0412",
+  "scenario": "sensor_short",
+  "reason": "All checks passed",
+  "png": "asl200_cng_peterbilt_eco0412__sensor_short.png",
+  "gif": "asl200_cng_peterbilt_eco0412__sensor_short.gif"
+ }
+]
