@@ -72,7 +72,7 @@ BO_ 2566857249 ARM_POSITION: 8 BODY_CONTROLLER
  SG_ ArmReachPosition : 16|16@1- (0.1,0) [-500|3000] "mm" ENGINE_ECU
 
 CM_ BO_ 2566853248 "Raw ratiometric sensor voltages from the arm I/O node. Scaled to engineering units by the body controller.";
-CM_ SG_ 2566853248 LiftSensorVoltage "Arm lift position sensor, 0-5V ratiometric (P/N 55-1180-0). Valid 250-4750 mV; outside that range is open circuit / short to supply.";
+CM_ SG_ 2566853248 LiftSensorVoltage "Arm lift position sensor, raw mV. ECO-0412: P/N 55-1180-1 (bodies >= ASL2-26-04100): 0.5-4.5 V; legacy P/N 55-1180-0: 0-5 V ratiometric. Valid 250-4750 mV; outside that range is open circuit / short to supply.";
 CM_ SG_ 2566853248 ReachSensorVoltage "Arm reach position sensor, 0.5-4.5V (P/N 55-1192-0). Valid 400-4600 mV.";
 CM_ SG_ 2566853505 LiftActuatorEffort "Hydraulic variants report lift circuit pressure in bar; the electric variant reports actuator current in A.";
 CM_ SG_ 2566856993 CycleState "0=IDLE 1=REACH_OUT 2=GRIP 3=LIFT 4=DUMP 5=LOWER 6=RELEASE 7=RETRACT 8=FAULT_STOP";

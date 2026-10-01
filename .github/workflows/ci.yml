@@ -54,7 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        variant: [asl200_diesel_autocar, asl200_cng_peterbilt, asl200_electric_mack, asl200_diesel_mack_longreach]
+        variant: [asl200_diesel_autocar, asl200_cng_peterbilt, asl200_electric_mack, asl200_diesel_mack_longreach, asl200_diesel_autocar_legacy]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -78,7 +78,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        variant: [asl200_diesel_autocar, asl200_cng_peterbilt, asl200_electric_mack, asl200_diesel_mack_longreach]
+        variant: [asl200_diesel_autocar, asl200_cng_peterbilt, asl200_electric_mack, asl200_diesel_mack_longreach, asl200_diesel_autocar_legacy]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

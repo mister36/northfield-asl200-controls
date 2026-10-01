@@ -1,0 +1,29 @@
+# Lift position sensor catalog. A variant's top-level `lift_sensor` selects the
+# fitted part; the variant loader resolves it into `controls.sensors.lift`
+# (calibration compiled into params_t) and `hardware.sensors.lift` (what the
+# SIL plant models), adding `part_number` to the latter.
+#
+# ECO-0412: 55-1180-0 (0-5 V ratiometric) is end-of-life and ships through body
+# serial ASL2-26-04099; 55-1180-1 (0.5-4.5 V, diagnostic bands < 0.25 V open /
+# > 4.75 V short-to-supply) replaces it from ASL2-26-04100. Same connector,
+# mount and angular range. Mixed fleets are expected - never pair a sensor
+# revision with a software build configured for the other.
+lift_sensors:
+  "55-1180-0":
+    v_lo_mv: 0
+    v_hi_mv: 5000
+    deg_at_v_lo: -20.0
+    deg_at_v_hi: 180.0
+    open_circuit_mv: 250
+    short_circuit_mv: 4750
+    noise_mv: 4.0
+    latency_ms: 10
+  "55-1180-1":
+    v_lo_mv: 500
+    v_hi_mv: 4500
+    deg_at_v_lo: -20.0
+    deg_at_v_hi: 180.0
+    open_circuit_mv: 250
+    short_circuit_mv: 4750
+    noise_mv: 4.0
+    latency_ms: 10
