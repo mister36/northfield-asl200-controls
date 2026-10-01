@@ -11,4 +11,7 @@ void controller_step(const inputs_t *in, outputs_t *out, state_t *s);
 /* Velocity profile used when moving an axis toward a target position. */
 float motion_approach_velocity(float distance, float v_max, float v_creep, float decel_zone);
 
+/* Constant-deceleration (v ~ sqrt(distance)) profile used by the auto-cycle to stop at a target. */
+float motion_target_velocity(float distance, float v_max, float v_creep, float decel_zone);
+
 #endif /* CONTROLLER_H */
