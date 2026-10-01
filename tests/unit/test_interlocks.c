@@ -83,6 +83,16 @@ static void test_approach_profile(void)
     CHECK_NEAR(motion_approach_velocity(0.0f, 60.0f, 6.0f, 30.0f), 0.0f, 1e-4);
 }
 
+static void test_target_profile(void)
+{
+    CHECK_NEAR(motion_target_velocity(100.0f, 60.0f, 6.0f, 30.0f), 60.0f, 1e-4);
+    CHECK_NEAR(motion_target_velocity(15.0f, 60.0f, 6.0f, 30.0f), 42.4264f, 1e-3);
+    CHECK_NEAR(motion_target_velocity(7.5f, 60.0f, 6.0f, 30.0f), 30.0f, 1e-3);
+    CHECK_NEAR(motion_target_velocity(3.0f, 60.0f, 20.0f, 30.0f), 20.0f, 1e-4); /* creep floor */
+    CHECK_NEAR(motion_target_velocity(0.5f, 60.0f, 6.0f, 30.0f), 0.0f, 1e-4);  /* inside stop band */
+    CHECK_NEAR(motion_target_velocity(0.0f, 60.0f, 6.0f, 30.0f), 0.0f, 1e-4);
+}
+
 static void test_stall_monitor(void)
 {
     stall_monitor_t m;
@@ -111,6 +121,7 @@ int main(void)
     test_grip_secure_dwell();
     test_soft_limits();
     test_approach_profile();
+    test_target_profile();
     test_stall_monitor();
     TEST_MAIN_END();
 }

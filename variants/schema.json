@@ -75,6 +75,10 @@
             "reach_decel_zone_mm": {
               "type": "number"
             },
+            "reach_stop_zone_mm": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
             "lift_clear_deg": {
               "type": "number"
             },
@@ -104,6 +108,10 @@
             "decel_zone_deg": {
               "type": "number"
             },
+            "lift_stop_zone_deg": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
             "release_time_ms": {
               "type": "integer",
               "minimum": 0
@@ -120,6 +128,7 @@
             "reach_speed_mmps",
             "reach_creep_mmps",
             "reach_decel_zone_mm",
+            "reach_stop_zone_mm",
             "lift_clear_deg",
             "grip_recheck_ms",
             "dump_angle_deg",
@@ -129,6 +138,7 @@
             "lift_accel_dps2",
             "creep_speed_dps",
             "decel_zone_deg",
+            "lift_stop_zone_deg",
             "release_time_ms",
             "lift_cmd_full_scale_dps",
             "reach_cmd_full_scale_mmps"

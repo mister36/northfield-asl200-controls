@@ -45,6 +45,22 @@ float motion_approach_velocity(float distance, float v_max, float v_creep, float
     return v;
 }
 
+float motion_target_velocity(float distance, float v_max, float v_creep, float decel_zone)
+{
+    float v = 0.0f;
+    if (distance <= (v_creep * STOP_LOOKAHEAD_S)) {
+        v = 0.0f;
+    } else if (distance >= decel_zone) {
+        v = v_max;
+    } else {
+        v = v_max * sqrtf(distance / decel_zone);
+        if (v < v_creep) {
+            v = v_creep;
+        }
+    }
+    return v;
+}
+
 void controller_init(state_t *s, const params_t *p)
 {
     s->p = p;
@@ -166,8 +182,8 @@ static void step_lift(state_t *s, bool secured, motion_req_t *req)
         s->cycle_aborted = true;
         enter_state(s, ST_LOWER);
     } else if (s->lift_phase == LP_CLEAR) {
-        req->lift_dps = motion_approach_velocity(p->motion.lift_clear_deg - s->lift_deg, p->motion.lift_speed_dps,
-                                                 p->motion.creep_speed_dps, p->motion.decel_zone_deg);
+        req->lift_dps = motion_target_velocity(p->motion.lift_clear_deg - s->lift_deg, p->motion.lift_speed_dps,
+                                                 p->motion.creep_speed_dps, p->motion.lift_stop_zone_deg);
         if (s->lift_deg >= (p->motion.lift_clear_deg - LIFT_ARRIVE_DEG)) {
             s->lift_phase = LP_GRIP_RECHECK;
             s->state_timer_ms = 0U;
@@ -180,8 +196,8 @@ static void step_lift(state_t *s, bool secured, motion_req_t *req)
             s->state_timer_ms = 0U;
         }
     } else {
-        req->lift_dps = motion_approach_velocity(p->motion.dump_angle_deg - s->lift_deg, p->motion.lift_speed_dps,
-                                                 p->motion.creep_speed_dps, p->motion.decel_zone_deg);
+        req->lift_dps = motion_target_velocity(p->motion.dump_angle_deg - s->lift_deg, p->motion.lift_speed_dps,
+                                                 p->motion.creep_speed_dps, p->motion.lift_stop_zone_deg);
         if (s->lift_deg >= (p->motion.dump_angle_deg - LIFT_ARRIVE_DEG)) {
             req->lift_dps = 0.0f;
             enter_state(s, ST_DUMP);
@@ -195,8 +211,8 @@ static void step_cycle(const inputs_t *in, state_t *s, bool secured, motion_req_
     switch (s->state) {
     case ST_REACH_OUT:
         s->grip_cmd = GRIP_OPEN;
-        req->reach_mmps = motion_approach_velocity(p->motion.reach_out_mm - s->reach_mm, p->motion.reach_speed_mmps,
-                                                   p->motion.reach_creep_mmps, p->motion.reach_decel_zone_mm);
+        req->reach_mmps = motion_target_velocity(p->motion.reach_out_mm - s->reach_mm, p->motion.reach_speed_mmps,
+                                                   p->motion.reach_creep_mmps, p->motion.reach_stop_zone_mm);
         if (s->reach_mm >= (p->motion.reach_out_mm - REACH_ARRIVE_MM)) {
             req->reach_mmps = 0.0f;
             enter_state(s, ST_GRIP);
@@ -224,8 +240,8 @@ static void step_cycle(const inputs_t *in, state_t *s, bool secured, motion_req_
         break;
     case ST_LOWER:
         s->grip_cmd = GRIP_CLOSE;
-        req->lift_dps = -motion_approach_velocity(s->lift_deg, p->motion.lower_speed_dps, p->motion.creep_speed_dps,
-                                                  p->motion.decel_zone_deg);
+        req->lift_dps = -motion_target_velocity(s->lift_deg, p->motion.lower_speed_dps, p->motion.creep_speed_dps,
+                                                  p->motion.lift_stop_zone_deg);
         if (s->lift_deg <= LIFT_ARRIVE_DEG) {
             req->lift_dps = 0.0f;
             enter_state(s, ST_RELEASE);
@@ -239,9 +255,9 @@ static void step_cycle(const inputs_t *in, state_t *s, bool secured, motion_req_
         break;
     case ST_RETRACT:
         s->grip_cmd = GRIP_OPEN;
-        req->reach_mmps = -motion_approach_velocity(s->reach_mm - p->limits.reach_soft_min_mm,
+        req->reach_mmps = -motion_target_velocity(s->reach_mm - p->limits.reach_soft_min_mm,
                                                     p->motion.reach_speed_mmps, p->motion.reach_creep_mmps,
-                                                    p->motion.reach_decel_zone_mm);
+                                                    p->motion.reach_stop_zone_mm);
         if (s->reach_mm <= (p->limits.reach_soft_min_mm + REACH_ARRIVE_MM)) {
             req->reach_mmps = 0.0f;
             if (!s->cycle_aborted) {
