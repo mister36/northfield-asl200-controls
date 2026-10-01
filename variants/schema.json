@@ -1,0 +1,488 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ASL-200 variant (merged)",
+  "type": "object",
+  "required": [
+    "name",
+    "description",
+    "controls",
+    "hardware"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^asl200_[a-z0-9_]+$"
+    },
+    "description": {
+      "type": "string"
+    },
+    "controls": {
+      "type": "object",
+      "properties": {
+        "interlocks": {
+          "type": "object",
+          "properties": {
+            "vehicle_speed_limit_mph": {
+              "type": "number",
+              "minimum": 0.5,
+              "maximum": 5.0
+            },
+            "grip_secure_pressure_bar": {
+              "type": "number"
+            },
+            "grip_secure_time_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "grip_timeout_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "tailgate_inhibit": {
+              "type": "boolean"
+            },
+            "batt_temp_max_c": {
+              "type": "number"
+            },
+            "ccvs_timeout_ms": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "vehicle_speed_limit_mph",
+            "grip_secure_pressure_bar",
+            "grip_secure_time_ms",
+            "grip_timeout_ms",
+            "tailgate_inhibit",
+            "batt_temp_max_c",
+            "ccvs_timeout_ms"
+          ],
+          "additionalProperties": false
+        },
+        "motion": {
+          "type": "object",
+          "properties": {
+            "reach_out_mm": {
+              "type": "number"
+            },
+            "reach_speed_mmps": {
+              "type": "number"
+            },
+            "reach_creep_mmps": {
+              "type": "number"
+            },
+            "reach_decel_zone_mm": {
+              "type": "number"
+            },
+            "lift_clear_deg": {
+              "type": "number"
+            },
+            "grip_recheck_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "dump_angle_deg": {
+              "type": "number"
+            },
+            "dump_dwell_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "lift_speed_dps": {
+              "type": "number"
+            },
+            "lower_speed_dps": {
+              "type": "number"
+            },
+            "lift_accel_dps2": {
+              "type": "number"
+            },
+            "creep_speed_dps": {
+              "type": "number"
+            },
+            "decel_zone_deg": {
+              "type": "number"
+            },
+            "release_time_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "lift_cmd_full_scale_dps": {
+              "type": "number"
+            },
+            "reach_cmd_full_scale_mmps": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "reach_out_mm",
+            "reach_speed_mmps",
+            "reach_creep_mmps",
+            "reach_decel_zone_mm",
+            "lift_clear_deg",
+            "grip_recheck_ms",
+            "dump_angle_deg",
+            "dump_dwell_ms",
+            "lift_speed_dps",
+            "lower_speed_dps",
+            "lift_accel_dps2",
+            "creep_speed_dps",
+            "decel_zone_deg",
+            "release_time_ms",
+            "lift_cmd_full_scale_dps",
+            "reach_cmd_full_scale_mmps"
+          ],
+          "additionalProperties": false
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "lift_soft_min_deg": {
+              "type": "number"
+            },
+            "lift_soft_max_deg": {
+              "type": "number"
+            },
+            "reach_soft_min_mm": {
+              "type": "number"
+            },
+            "reach_soft_max_mm": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "lift_soft_min_deg",
+            "lift_soft_max_deg",
+            "reach_soft_min_mm",
+            "reach_soft_max_mm"
+          ],
+          "additionalProperties": false
+        },
+        "stall": {
+          "type": "object",
+          "properties": {
+            "stall_timeout_ms": {
+              "type": "integer",
+              "minimum": 100,
+              "maximum": 3000
+            },
+            "stall_min_travel_deg": {
+              "type": "number"
+            },
+            "stall_min_travel_mm": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "stall_timeout_ms",
+            "stall_min_travel_deg",
+            "stall_min_travel_mm"
+          ],
+          "additionalProperties": false
+        },
+        "sensors": {
+          "type": "object",
+          "properties": {
+            "lift": {
+              "type": "object",
+              "properties": {
+                "v_lo_mv": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "v_hi_mv": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "deg_at_v_lo": {
+                  "type": "number"
+                },
+                "deg_at_v_hi": {
+                  "type": "number"
+                },
+                "open_circuit_mv": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "short_circuit_mv": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "v_lo_mv",
+                "v_hi_mv",
+                "deg_at_v_lo",
+                "deg_at_v_hi",
+                "open_circuit_mv",
+                "short_circuit_mv"
+              ],
+              "additionalProperties": false
+            },
+            "reach": {
+              "type": "object",
+              "properties": {
+                "v_lo_mv": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "v_hi_mv": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mm_at_v_lo": {
+                  "type": "number"
+                },
+                "mm_at_v_hi": {
+                  "type": "number"
+                },
+                "open_circuit_mv": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "short_circuit_mv": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "v_lo_mv",
+                "v_hi_mv",
+                "mm_at_v_lo",
+                "mm_at_v_hi",
+                "open_circuit_mv",
+                "short_circuit_mv"
+              ],
+              "additionalProperties": false
+            },
+            "debounce_ms": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "lift",
+            "reach",
+            "debounce_ms"
+          ],
+          "additionalProperties": false
+        },
+        "requirements": {
+          "type": "object",
+          "properties": {
+            "cycle_time_budget_s": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "cycle_time_budget_s"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "interlocks",
+        "motion",
+        "limits",
+        "stall",
+        "sensors",
+        "requirements"
+      ],
+      "additionalProperties": false
+    },
+    "hardware": {
+      "type": "object",
+      "properties": {
+        "powertrain": {
+          "enum": [
+            "hydraulic",
+            "electric"
+          ]
+        },
+        "chassis": {
+          "type": "string"
+        },
+        "arm": {
+          "type": "object",
+          "properties": {
+            "lift_hard_min_deg": {
+              "type": "number"
+            },
+            "lift_hard_max_deg": {
+              "type": "number"
+            },
+            "reach_hard_max_mm": {
+              "type": "number"
+            },
+            "bin_mass_kg": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "lift_hard_min_deg",
+            "lift_hard_max_deg",
+            "reach_hard_max_mm",
+            "bin_mass_kg"
+          ],
+          "additionalProperties": true
+        },
+        "sensors": {
+          "type": "object",
+          "properties": {
+            "lift": {
+              "type": "object",
+              "properties": {
+                "part_number": {
+                  "type": "string"
+                },
+                "v_lo_mv": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "v_hi_mv": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "deg_at_v_lo": {
+                  "type": "number"
+                },
+                "deg_at_v_hi": {
+                  "type": "number"
+                },
+                "noise_mv": {
+                  "type": "number"
+                },
+                "latency_ms": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "part_number",
+                "v_lo_mv",
+                "v_hi_mv",
+                "deg_at_v_lo",
+                "deg_at_v_hi",
+                "noise_mv",
+                "latency_ms"
+              ],
+              "additionalProperties": true
+            },
+            "reach": {
+              "type": "object",
+              "properties": {
+                "part_number": {
+                  "type": "string"
+                },
+                "v_lo_mv": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "v_hi_mv": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mm_at_v_lo": {
+                  "type": "number"
+                },
+                "mm_at_v_hi": {
+                  "type": "number"
+                },
+                "noise_mv": {
+                  "type": "number"
+                },
+                "latency_ms": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "part_number",
+                "v_lo_mv",
+                "v_hi_mv",
+                "mm_at_v_lo",
+                "mm_at_v_hi",
+                "noise_mv",
+                "latency_ms"
+              ],
+              "additionalProperties": true
+            }
+          },
+          "required": [
+            "lift",
+            "reach"
+          ],
+          "additionalProperties": true
+        },
+        "actuator": {
+          "type": "object",
+          "properties": {
+            "lift_full_scale_dps": {
+              "type": "number"
+            },
+            "reach_full_scale_mmps": {
+              "type": "number"
+            },
+            "lift_tau_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "lift_accel_limit_dps2": {
+              "type": "number"
+            },
+            "reach_tau_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "reach_accel_limit_mmps2": {
+              "type": "number"
+            },
+            "onset_delay_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "cold_onset_delay_ms": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "cold_rate_factor": {
+              "type": "number"
+            },
+            "gripper_clamp_bar": {
+              "type": "number"
+            },
+            "gripper_rate_bar_per_s": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "lift_full_scale_dps",
+            "reach_full_scale_mmps",
+            "lift_tau_ms",
+            "lift_accel_limit_dps2",
+            "reach_tau_ms",
+            "reach_accel_limit_mmps2",
+            "onset_delay_ms",
+            "cold_onset_delay_ms",
+            "cold_rate_factor",
+            "gripper_clamp_bar",
+            "gripper_rate_bar_per_s"
+          ],
+          "additionalProperties": {
+            "type": "number"
+          }
+        }
+      },
+      "required": [
+        "powertrain",
+        "chassis",
+        "arm",
+        "sensors",
+        "actuator"
+      ],
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ASL-200 SIL trace viewer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --bg:#0e1117; --panel:#161b22; --line:#2a3140; --fg:#d8dee9; --dim:#7b8496; --ok:#a3be8c; --bad:#bf616a;
+          --warn:#ebcb8b; --acc:#88c0d0; --vio:#b48ead; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:13px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  header { display:flex; align-items:center; gap:14px; padding:10px 16px; border-bottom:1px solid var(--line); background:var(--panel); }
+  header h1 { font-size:14px; margin:0; font-weight:600; letter-spacing:.3px; }
+  header .sub { color:var(--dim); }
+  header .spacer { flex:1; }
+  button, select, label.btn { background:#222a36; color:var(--fg); border:1px solid var(--line); border-radius:4px; padding:5px 10px;
+          font:inherit; cursor:pointer; }
+  button:hover, label.btn:hover { border-color:var(--acc); }
+  button.primary { background:#2e3b4e; border-color:#3f5370; }
+  #drop { margin:40px auto; max-width:760px; border:2px dashed var(--line); border-radius:8px; padding:40px; text-align:center; color:var(--dim); }
+  #drop.over { border-color:var(--acc); color:var(--fg); }
+  #drop code { color:var(--acc); }
+  main { display:none; padding:12px 16px; }
+  .panes { display:grid; gap:12px; }
+  .panes.two { grid-template-columns:1fr 1fr; }
+  .pane { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:10px; min-width:0; }
+  .pane h2 { margin:0 0 6px; font-size:13px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .badge { padding:1px 7px; border-radius:3px; font-size:11px; font-weight:700; }
+  .badge.pass { background:#2c3a2a; color:var(--ok); } .badge.fail { background:#3d2327; color:var(--bad); }
+  .badge.src { background:#232c3a; color:var(--acc); font-weight:500; }
+  .row { display:flex; gap:10px; }
+  .scene { flex: 0 0 auto; }
+  canvas { display:block; }
+  .side { flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
+  .lamps { display:grid; grid-template-columns:repeat(3, 1fr); gap:4px; }
+  .lamp { border:1px solid var(--line); border-radius:3px; padding:3px 6px; font-size:11px; color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lamp.on { color:#0e1117; background:var(--ok); border-color:var(--ok); }
+  .lamp.alarm { color:#fff; background:var(--bad); border-color:var(--bad); }
+  .lamp.warn { color:#0e1117; background:var(--warn); border-color:var(--warn); }
+  .kv { display:grid; grid-template-columns:auto 1fr; gap:1px 10px; font-size:12px; }
+  .kv span:nth-child(odd) { color:var(--dim); }
+  .state { font-size:18px; font-weight:700; letter-spacing:.5px; }
+  .state.fault { color:var(--bad); }
+  .checks { font-size:11px; margin:6px 0 0; padding:0; list-style:none; }
+  .checks li.fail { color:var(--bad); } .checks li.pass { color:var(--dim); }
+  .bottom { display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-top:12px; }
+  .box { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:8px 10px; min-width:0; }
+  .box h3 { margin:0 0 6px; font-size:12px; color:var(--dim); font-weight:600; text-transform:uppercase; letter-spacing:.6px; }
+  .frames { height:230px; overflow:auto; font-size:11px; white-space:pre; }
+  .frames .tx { color:var(--warn); } .frames .rx { color:var(--acc); } .frames .unk { color:var(--dim); }
+  .frames .dm1 { color:var(--bad); font-weight:700; }
+  .events { height:230px; overflow:auto; font-size:12px; }
+  .events div { cursor:pointer; padding:1px 4px; border-radius:3px; }
+  .events div:hover { background:#222a36; }
+  .events .ev-dtc { color:var(--bad); font-weight:700; }
+  .events .past { opacity:.55; }
+  #transport { position:sticky; bottom:0; background:var(--panel); border-top:1px solid var(--line); padding:8px 16px; display:none; align-items:center; gap:10px; }
+  #scrub { flex:1; }
+  #clock { min-width:150px; text-align:right; }
+  .hint { color:var(--dim); font-size:11px; }
+  .sm { display:flex; flex-wrap:wrap; gap:3px; align-items:center; font-size:10px; }
+  .sm span.n { border:1px solid var(--line); border-radius:9px; padding:1px 6px; color:var(--dim); }
+  .sm span.n.on { color:#0e1117; font-weight:700; }
+  .sm span.n.fault { margin-left:6px; border-color:#5a2d33; }
+  .sm span.n.fault.on { background:var(--bad); color:#fff; border-color:var(--bad); }
+  .sm span.ar { color:#3b4252; }
+  .gauges { display:grid; grid-template-columns:auto 1fr auto; gap:2px 6px; font-size:11px; align-items:center; }
+  .gauges .bar { height:7px; background:#0b0e13; border:1px solid var(--line); border-radius:2px; position:relative; overflow:hidden; }
+  .gauges .bar i { position:absolute; left:0; top:0; bottom:0; background:var(--acc); }
+  .gauges .bar i.cold { background:#81a1c1; } .gauges .bar i.hot { background:var(--warn); }
+  .gauges span.v { text-align:right; min-width:62px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ASL-200 · SIL trace viewer</h1>
+  <span class="sub" id="subtitle">Northfield Body Works · body controls</span>
+  <span class="spacer"></span>
+  <label class="btn">Open trace(s)<input id="file" type="file" accept=".json" multiple hidden></label>
+  <button id="clear" style="display:none">Close</button>
+</header>
+
+<div id="drop">
+  <p style="font-size:15px;color:var(--fg)">Drop one trace to play it, or two to compare side by side.</p>
+  <p>Traces are written by <code>make sil</code> (<code>out/&lt;variant&gt;/&lt;scenario&gt;.trace.json</code>) and by
+     <code>tools/replay_log.py --viz</code> (<code>out/replay/*.field.trace.json</code> + <code>*.resim.trace.json</code>).</p>
+  <p class="hint">Also: <code>viewer.html?trace=a.trace.json&amp;trace=b.trace.json</code> when served over HTTP.<br>
+     Keys: space play/pause · ←/→ step 10 ms (shift: 1 s) · [ / ] speed · Home/End</p>
+</div>
+
+<main id="main"><div class="panes" id="panes"></div>
+  <div class="bottom">
+    <div class="box"><h3>Events <span class="hint">(click to seek)</span></h3><div class="events" id="events"></div></div>
+    <div class="box"><h3>CAN bus around cursor <span class="hint" id="framesrc"></span></h3><div class="frames" id="frames"></div></div>
+  </div>
+</main>
+
+<div id="transport">
+  <button id="play" class="primary">▶ Play</button>
+  <select id="speed"><option>0.25</option><option>0.5</option><option selected>1</option><option>2</option><option>4</option><option>8</option></select>
+  <button id="jumpdtc" title="jump to next DTC">next DTC ⏭</button>
+  <input id="scrub" type="range" min="0" max="1000" value="0" step="1">
+  <span id="clock">0.00 s</span>
+</div>
+
+<script id="embedded-traces" type="application/json">[]</script>
+<script>
+"use strict";
+const STATE_COLORS = ["#3b4252","#5e81ac","#b48ead","#a3be8c","#ebcb8b","#88c0d0","#d08770","#81a1c1","#bf616a"];
+const PHASES = ["CLEAR_GROUND","GRIP_RECHECK","RAISE","-","-","-","-","-"];
+let traces = [], T = 0, tEnd = 0, playing = false, lastTs = null;
+
+// ---------- loading ----------
+const $ = id => document.getElementById(id);
+function addTraces(list) {
+  for (const tr of list) {
+    if (!tr || !tr.signals || !tr.meta) { alert("not an ASL-200 trace file"); continue; }
+    if (traces.length >= 2) traces.shift();
+    traces.push(prepare(tr));
+  }
+  if (traces.length) start();
+}
+function readFiles(files) {
+  Promise.all([...files].slice(0, 2).map(f => f.text().then(JSON.parse))).then(addTraces).catch(e => alert(e));
+}
+$("file").onchange = e => readFiles(e.target.files);
+const drop = $("drop");
+document.addEventListener("dragover", e => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; drop.classList.add("over"); });
+document.addEventListener("dragleave", () => drop.classList.remove("over"));
+document.addEventListener("drop", e => {
+  e.preventDefault(); drop.classList.remove("over");
+  if (e.dataTransfer.files.length) readFiles(e.dataTransfer.files);
+  else alert("The drop contained no files (some file managers pass only a path). Use \"Open trace(s)\" instead.");
+});
+$("clear").onclick = () => { traces = []; playing = false; $("main").style.display = "none"; $("transport").style.display = "none";
+  drop.style.display = ""; $("clear").style.display = "none"; };
+
+function prepare(tr) {
+  const s = tr.signals, n = s.t.length;
+  tr.n = n; tr.dt = tr.meta.dt_s || 0.01;
+  tr.dbcById = {};
+  for (const m of (tr.meta.dbc || [])) tr.dbcById[m.id] = m;
+  tr.frameT = (tr.frames || []).map(f => f[0]);
+  const p = tr.meta.params;
+  tr.lim = { softMax: p.controls.limits.lift_soft_max_deg, softMin: p.controls.limits.lift_soft_min_deg,
+             hardMax: p.hardware.arm.lift_hard_max_deg, reachMax: p.hardware.arm.reach_hard_max_mm || 2000,
+             fs: p.controls.motion.lift_cmd_full_scale_dps,
+             speedLimit: p.controls.interlocks.vehicle_speed_limit_mph };
+  tr.peak = Math.max(...s.lift_deg);
+  tr.peakIdx = s.lift_deg.indexOf(tr.peak);
+  tr.overshoot = tr.peak > tr.lim.softMax + 0.5;
+  const act = p.hardware.actuator || {};
+  tr.effMax = Math.max(act.current_limit_a || 0, ...s.effort) * 1.05 || 1;
+  return tr;
+}
+function idx(tr, t) { return Math.max(0, Math.min(tr.n - 1, Math.round(t / tr.dt))); }
+
+// ---------- layout ----------
+function start() {
+  drop.style.display = "none"; $("main").style.display = "block"; $("transport").style.display = "flex"; $("clear").style.display = "";
+  tEnd = Math.max(...traces.map(tr => tr.signals.t[tr.n - 1]));
+  const panes = $("panes"); panes.innerHTML = ""; panes.className = "panes" + (traces.length === 2 ? " two" : "");
+  const two = traces.length === 2;
+  traces.forEach((tr, k) => {
+    const m = tr.meta, verdict = tr.passed === undefined ? null : tr.passed;
+    const el = document.createElement("div"); el.className = "pane";
+    const failed = (tr.checks || []).filter(c => !c.passed);
+    el.innerHTML = `
+      <h2>${m.variant} <span style="color:var(--dim)">/</span> ${m.scenario}
+        ${verdict === null ? "" : `<span class="badge ${verdict ? "pass" : "fail"}">${verdict ? "PASS" : "FAIL"}</span>`}
+        <span class="badge src">${m.source || "sil"}</span></h2>
+      <div class="hint">${m.description || ""}${m.ambient_c != null ? ` · ambient ${m.ambient_c.toFixed(1)} °C` : ""}${m.battery_c != null ? ` · battery ${m.battery_c.toFixed(1)} °C` : ""}${m.seed != null ? ` · seed ${m.seed}` : ""}</div>
+      <div class="row" style="margin-top:6px">
+        <div class="scene"><canvas width="${two ? 330 : 420}" height="300"></canvas></div>
+        <div class="side">
+          <div class="state" data-k="state">IDLE</div>
+          <div class="sm" data-k="sm">${m.state_names.map((n, k) => (k === 8 ? "" : k ? '<span class="ar">›</span>' : "") +
+              `<span class="n${k === 8 ? " fault" : ""}" data-s="${k}">${n}</span>`).join("")}</div>
+          <div class="lamps">
+            <div class="lamp" data-l="ilk_speed_ok">speed OK</div><div class="lamp" data-l="ilk_grip_secured">grip secured</div>
+            <div class="lamp" data-l="tailgate">tailgate closed</div><div class="lamp" data-l="soft_limit_active">soft-limit</div>
+            <div class="lamp" data-l="stall_detected">stall</div><div class="lamp" data-l="dtc">DM1</div></div>
+          <div class="gauges" data-k="gauges"></div>
+          <div class="kv" data-k="kv"></div>
+          ${(tr.checks || []).length ? `<ul class="checks">${(failed.length ? failed : tr.checks).map(c =>
+              `<li class="${c.passed ? "pass" : "fail"}">${c.passed ? "✓" : "✗"} ${c.name}: ${c.detail}</li>`).join("")}</ul>` : ""}
+        </div>
+      </div>
+      <canvas class="chart" height="${two ? 330 : 300}"></canvas>`;
+    panes.appendChild(el);
+    tr.el = el; tr.scene = el.querySelector(".scene canvas"); tr.chart = el.querySelector("canvas.chart");
+  });
+  requestAnimationFrame(() => { traces.forEach(tr => { tr.chart.width = tr.chart.parentElement.clientWidth - 20; }); buildEvents(); seek(0); });
+}
+
+// ---------- scene ----------
+function drawScene(tr, i) {
+  const c = tr.scene, g = c.getContext("2d"), W = c.width, H = c.height, s = tr.signals;
+  const lift = s.lift_deg[i], reach = s.reach_mm[i], grip = s.grip_bar[i];
+  const sc = W / 6.4, ox = W * 0.45, gy = H - 18;               // metres -> px, pivot x, ground y
+  const X = x => ox + x * sc, Y = y => gy - y * sc;
+  g.clearRect(0, 0, W, H); g.fillStyle = "#0b0e13"; g.fillRect(0, 0, W, H);
+  // ground + curb
+  g.fillStyle = "#1c222c"; g.fillRect(0, gy, W, H - gy);
+  g.fillStyle = "#2a3140"; g.fillRect(X(0.9), gy - 4, W, 4);
+  // truck body (rear view): hopper + cab rail
+  g.fillStyle = "#222b38"; g.strokeStyle = "#3b4658"; g.lineWidth = 2;
+  g.fillRect(X(-2.5), Y(3.4), 2.5 * sc, 2.5 * sc); g.strokeRect(X(-2.5), Y(3.4), 2.5 * sc, 2.5 * sc);
+  g.fillStyle = "#11151c"; g.fillRect(X(-2.3), Y(3.4), 2.1 * sc, 0.25 * sc);
+  g.fillStyle = "#1a1f27"; g.beginPath(); g.arc(X(-2.0), Y(0.5), 0.5 * sc, 0, 7); g.arc(X(-0.4), Y(0.5), 0.5 * sc, 0, 7); g.fill();
+  g.fillStyle = "#7b8496"; g.font = "10px monospace"; g.fillText("HOPPER", X(-1.65), Y(2.2));
+  // limits: boom angle phi = -45 + lift
+  const px = 0.15, py = 2.6, L = 1.0 + reach / 1000;
+  const ang = d => (-45 + d) * Math.PI / 180;
+  const arc = (d0, d1, col, w) => { g.strokeStyle = col; g.lineWidth = w; g.beginPath();
+    g.arc(X(px), Y(py), (L + 0.35) * sc, -ang(d1), -ang(d0)); g.stroke(); };
+  arc(tr.lim.softMax, tr.lim.hardMax, "rgba(235,203,139,.55)", 6);
+  arc(tr.lim.hardMax, tr.lim.hardMax + 8, "rgba(191,97,106,.8)", 6);
+  // boom
+  const a = ang(lift), tx = px + L * Math.cos(a), ty = py + L * Math.sin(a);
+  const over = lift > tr.lim.softMax + 0.05;
+  g.strokeStyle = "#4c566a"; g.lineWidth = 12; g.lineCap = "round";
+  g.beginPath(); g.moveTo(X(px), Y(py)); g.lineTo(X(px + 1.0 * Math.cos(a)), Y(py + 1.0 * Math.sin(a))); g.stroke();
+  g.strokeStyle = over ? "#bf616a" : "#88c0d0"; g.lineWidth = 7;
+  g.beginPath(); g.moveTo(X(px + 0.6 * Math.cos(a)), Y(py + 0.6 * Math.sin(a))); g.lineTo(X(tx), Y(ty)); g.stroke();
+  g.fillStyle = "#d8dee9"; g.beginPath(); g.arc(X(px), Y(py), 5, 0, 7); g.fill();
+  // gripper + can
+  const held = grip > 40 && s.state[i] !== 0 || (grip > 40 && lift > 3);
+  const canW = 0.62 * sc, canH = 1.05 * sc;
+  g.save();
+  if (held) { g.translate(X(tx), Y(ty)); g.rotate(-lift * Math.PI / 180); g.translate(0.31 * sc, 0); }
+  else { g.translate(X(1.77 + 0.31 + px), Y(0.0) - canH * 0.45); }
+  g.fillStyle = "#4f6b3a"; g.strokeStyle = "#a3be8c"; g.lineWidth = 1.5;
+  g.fillRect(-canW / 2, -canH * 0.55, canW, canH); g.strokeRect(-canW / 2, -canH * 0.55, canW, canH);
+  g.fillStyle = "#a3be8c"; g.fillRect(-canW / 2 - 3, -canH * 0.55 - 4, canW + 6, 5);
+  g.restore();
+  g.strokeStyle = grip > 40 ? "#a3be8c" : "#7b8496"; g.lineWidth = 4;
+  g.beginPath(); g.arc(X(tx), Y(ty), 0.18 * sc, 0, 7); g.stroke();
+  // readout
+  g.fillStyle = over ? "#bf616a" : "#d8dee9"; g.font = "bold 13px monospace";
+  g.fillText(`lift ${lift.toFixed(1)}°`, 8, 18);
+  g.font = "12px monospace"; g.fillStyle = "#7b8496";
+  g.fillText(`reach ${reach.toFixed(0)} mm`, 8, 34);
+  g.fillText(`soft ${tr.lim.softMax}° / hard ${tr.lim.hardMax}°`, 8, 50);
+  if (over) { g.fillStyle = "#bf616a"; g.font = "bold 14px monospace"; g.fillText("SOFT LIMIT EXCEEDED", 8, 70); }
+  if (tr.overshoot && T >= s.t[tr.peakIdx]) {            // overshoot marker on the travel arc
+    const pa = ang(tr.peak), rr = L + 0.35;
+    g.fillStyle = "#bf616a"; g.beginPath(); g.arc(X(px + rr * Math.cos(pa)), Y(py + rr * Math.sin(pa)), 5, 0, 7); g.fill();
+    g.font = "bold 11px monospace"; g.fillText(`peak ${tr.peak.toFixed(1)}°`, X(px + rr * Math.cos(pa)) + 8, Y(py + rr * Math.sin(pa)) - 4);
+  }
+  // side-profile inset: cab + body, curb side marked
+  const ix = W - 128, iy = 8;
+  g.fillStyle = "rgba(11,14,19,.85)"; g.fillRect(ix - 4, iy - 2, 124, 54);
+  g.fillStyle = "#2b3442"; g.fillRect(ix + 2, iy + 16, 30, 22); g.fillStyle = "#3b4658"; g.fillRect(ix + 6, iy + 19, 14, 9);
+  g.fillStyle = "#222b38"; g.fillRect(ix + 34, iy + 6, 78, 32); g.strokeStyle = "#3b4658"; g.lineWidth = 1; g.strokeRect(ix + 34, iy + 6, 78, 32);
+  g.fillStyle = "#1a1f27"; for (const wx of [ix + 16, ix + 76, ix + 98]) { g.beginPath(); g.arc(wx, iy + 41, 6, 0, 7); g.fill(); }
+  g.strokeStyle = over ? "#bf616a" : "#88c0d0"; g.lineWidth = 3; g.beginPath(); g.moveTo(ix + 38, iy + 30);
+  g.lineTo(ix + 38 + 14 * Math.cos(a), iy + 30 - 14 * Math.sin(a)); g.stroke();
+  g.fillStyle = "#7b8496"; g.font = "9px monospace"; g.fillText("cab", ix + 9, iy + 13); g.fillText("ASL-200 body", ix + 44, iy + 24);
+  g.fillText("rear view ↓  (arm on curb side)", 8, H - 4);
+  if (s.state[i] === 8) { g.fillStyle = "#bf616a"; g.font = "bold 14px monospace"; g.fillText("FAULT_STOP", W - 110, 76); }
+}
+
+// ---------- chart ----------
+function drawChart(tr, i) {
+  const c = tr.chart, g = c.getContext("2d"), W = c.width, H = c.height, s = tr.signals, t = s.t;
+  const L = 44, R = 8, tmax = tEnd || t[tr.n - 1];
+  const bands = [{ y0: 4, h: H * 0.46 }, { y0: H * 0.46 + 12, h: H * 0.30 }, { y0: H * 0.80 + 10, h: H * 0.07 }, { y0: H * 0.90 + 8, h: H * 0.07 }];
+  g.clearRect(0, 0, W, H);
+  const xs = tt => L + (tt / tmax) * (W - L - R);
+  const plot = (band, arr, lo, hi, col, w, dash) => {
+    const ys = v => band.y0 + band.h - ((v - lo) / (hi - lo)) * band.h;
+    g.strokeStyle = col; g.lineWidth = w; g.setLineDash(dash || []); g.beginPath();
+    const step = Math.max(1, Math.floor(tr.n / (W * 1.5)));
+    for (let k = 0; k < tr.n; k += step) { const x = xs(t[k]), y = ys(arr[k]); k ? g.lineTo(x, y) : g.moveTo(x, y); }
+    g.stroke(); g.setLineDash([]); return ys;
+  };
+  const frame = (band, lo, hi, label, ticks) => {
+    g.strokeStyle = "#2a3140"; g.lineWidth = 1; g.strokeRect(L, band.y0, W - L - R, band.h);
+    g.fillStyle = "#7b8496"; g.font = "10px monospace";
+    for (const v of ticks) { const y = band.y0 + band.h - ((v - lo) / (hi - lo)) * band.h;
+      g.fillText(String(v), 4, y + 3); g.strokeStyle = "#1e2530"; g.beginPath(); g.moveTo(L, y); g.lineTo(W - R, y); g.stroke(); }
+    g.fillStyle = "#d8dee9"; g.fillText(label, L + 6, band.y0 + 12);
+  };
+  // lift
+  const b0 = bands[0], hi0 = Math.max(tr.lim.hardMax + 8, tr.peak + 5);
+  frame(b0, -10, hi0, "lift angle [deg]   — actual   - - ECU measured", [0, 50, 100, 150]);
+  const y0 = v => b0.y0 + b0.h - ((v + 10) / (hi0 + 10)) * b0.h;
+  g.fillStyle = "rgba(235,203,139,.10)"; g.fillRect(L, y0(tr.lim.hardMax), W - L - R, y0(tr.lim.softMax) - y0(tr.lim.hardMax));
+  g.fillStyle = "rgba(191,97,106,.15)"; g.fillRect(L, b0.y0, W - L - R, y0(tr.lim.hardMax) - b0.y0);
+  g.strokeStyle = "#ebcb8b"; g.setLineDash([5, 4]); g.beginPath(); g.moveTo(L, y0(tr.lim.softMax)); g.lineTo(W - R, y0(tr.lim.softMax)); g.stroke(); g.setLineDash([]);
+  plot(b0, s.lift_deg, -10, hi0, "#88c0d0", 1.8);
+  plot(b0, s.ctrl_lift_deg, -10, hi0, "#5e81ac", 1, [4, 3]);
+  if (tr.overshoot) { const x = xs(t[tr.peakIdx]), y = y0(tr.peak);
+    g.fillStyle = "#bf616a"; g.beginPath(); g.moveTo(x, y - 2); g.lineTo(x - 6, y - 12); g.lineTo(x + 6, y - 12); g.fill();
+    g.font = "bold 11px monospace"; g.fillText(`overshoot ${tr.peak.toFixed(1)}°`, x + 8, y - 4); }
+  // cmd vs actual
+  const b1 = bands[1];
+  frame(b1, -100, 100, "lift cmd [%] vs actual velocity [% FS] · reach cmd", [-100, 0, 100]);
+  plot(b1, s.reach_cmd_pct, -100, 100, "rgba(180,142,173,.7)", 1);
+  plot(b1, s.lift_dps.map(v => v / tr.lim.fs * 100), -100, 100, "#88c0d0", 1);
+  plot(b1, s.lift_cmd_pct, -100, 100, "#ebcb8b", 1.4);
+  // speed
+  const b2 = bands[2], smax = Math.max(6, ...s.speed_mph) * 1.1;
+  frame(b2, 0, smax, "", []);
+  plot(b2, s.speed_mph, 0, smax, "#5e81ac", 1.2);
+  const yl = b2.y0 + b2.h - (tr.lim.speedLimit / smax) * b2.h;
+  g.strokeStyle = "#bf616a"; g.setLineDash([3, 3]); g.beginPath(); g.moveTo(L, yl); g.lineTo(W - R, yl); g.stroke(); g.setLineDash([]);
+  g.fillStyle = "#7b8496"; g.font = "10px monospace"; g.fillText(`mph (limit ${tr.lim.speedLimit})`, 2, b2.y0 + 9);
+  // states
+  const b3 = bands[3]; let k0 = 0;
+  for (let k = 1; k <= tr.n; k++) if (k === tr.n || s.state[k] !== s.state[k0]) {
+    g.fillStyle = STATE_COLORS[s.state[k0]] || "#333"; g.fillRect(xs(t[k0]), b3.y0, Math.max(1, xs(t[k - 1]) - xs(t[k0]) + 1), b3.h); k0 = k; }
+  g.fillStyle = "#7b8496"; g.fillText("state", 4, b3.y0 + 10);
+  // DTC markers + cursor
+  for (const d of tr.dtcs || []) { const x = xs(d.t); g.strokeStyle = "#bf616a"; g.lineWidth = 1.5;
+    g.beginPath(); g.moveTo(x, 4); g.lineTo(x, H - 2); g.stroke(); g.fillStyle = "#bf616a"; g.font = "bold 10px monospace";
+    g.fillText(`DTC ${d.spn}/${d.fmi}`, x + 3, b0.y0 + 24); }
+  const cx = xs(t[i]); g.strokeStyle = "#ffffff"; g.lineWidth = 1; g.beginPath(); g.moveTo(cx, 2); g.lineTo(cx, H - 2); g.stroke();
+  // x ticks
+  g.fillStyle = "#7b8496"; g.font = "10px monospace";
+  const stepS = tmax > 60 ? 10 : tmax > 25 ? 5 : 2;
+  for (let tt = 0; tt <= tmax; tt += stepS) g.fillText(tt + "s", xs(tt) - 6, H - 1);
+  c.onclick = e => { const r = c.getBoundingClientRect(); seek(((e.clientX - r.left) * (W / r.width) - L) / (W - L - R) * tmax); };
+}
+
+// ---------- side panel ----------
+function lamp(el, name, on, cls) { const l = el.querySelector(`[data-l="${name}"]`); l.className = "lamp" + (on ? " " + cls : ""); }
+function drawSide(tr, i) {
+  const s = tr.signals, el = tr.el, names = tr.meta.state_names, st = s.state[i];
+  const se = el.querySelector('[data-k="state"]');
+  se.textContent = names[st] + (st === 3 ? " · " + (PHASES[s.lift_phase[i]] || "") : ""); se.className = "state" + (st === 8 ? " fault" : "");
+  el.querySelectorAll(".sm span.n").forEach(n => { const on = +n.dataset.s === st; n.classList.toggle("on", on);
+    n.style.background = on && st !== 8 ? STATE_COLORS[st] : ""; });
+  const m = tr.meta, unitG = m.effort_unit || "";
+  const gauge = (label, v, lo, hi, txt, cls) => `<span>${label}</span><span class="bar"><i class="${cls || ""}" style="width:${
+      Math.max(0, Math.min(100, (v - lo) / (hi - lo) * 100)).toFixed(1)}%"></i></span><span class="v">${txt}</span>`;
+  el.querySelector('[data-k="gauges"]').innerHTML =
+    gauge(m.powertrain === "electric" ? "actuator I" : "lift press.", s.effort[i], 0, tr.effMax, `${s.effort[i].toFixed(0)} ${unitG}`) +
+    (m.ambient_c != null ? gauge("ambient", m.ambient_c, -30, 50, `${m.ambient_c.toFixed(1)} °C`, m.ambient_c < 0 ? "cold" : m.ambient_c > 35 ? "hot" : "") : "") +
+    (m.battery_c != null ? gauge("battery", m.battery_c, -30, 60, `${m.battery_c.toFixed(1)} °C`, m.battery_c < 0 ? "cold" : m.battery_c > 40 ? "hot" : "") : "");
+  lamp(el, "ilk_speed_ok", s.ilk_speed_ok[i], "on"); lamp(el, "ilk_grip_secured", s.ilk_grip_secured[i], "on");
+  lamp(el, "tailgate", !s.tailgate_open[i], "on"); lamp(el, "soft_limit_active", s.soft_limit_active[i], "warn");
+  lamp(el, "stall_detected", s.stall_detected[i], "alarm"); lamp(el, "dtc", s.dtc_spn[i], "alarm");
+  el.querySelector('[data-l="dtc"]').textContent = s.dtc_spn[i] ? `DM1 SPN ${s.dtc_spn[i]}` : "DM1 clear";
+  const unit = tr.meta.effort_unit || "";
+  el.querySelector('[data-k="kv"]').innerHTML = [
+    ["lift cmd", `${s.lift_cmd_pct[i].toFixed(1)} %`], ["lift vel", `${s.lift_dps[i].toFixed(1)} °/s`],
+    ["reach cmd", `${s.reach_cmd_pct[i].toFixed(1)} %`], ["gripper", `${s.grip_bar[i].toFixed(0)} bar`],
+    ["actuator", `${s.effort[i].toFixed(1)} ${unit}`], ["veh speed", `${s.speed_mph[i].toFixed(1)} mph`],
+    ["lift sensor", `${s.lift_mv[i]} mV`], ["auto req", s.auto_request[i] ? "held" : "-"],
+  ].map(([k, v]) => `<span>${k}</span><span>${v}</span>`).join("");
+}
+
+// ---------- CAN frames ----------
+function decodeFrame(tr, idHex, dataHex) {
+  const m = tr.dbcById[idHex]; if (!m) return null;
+  const bytes = []; for (let k = 0; k < dataHex.length; k += 2) bytes.push(parseInt(dataHex.substr(k, 2), 16));
+  const parts = [];
+  for (const sg of m.signals) {
+    let raw = 0;
+    for (let b = 0; b < sg.l; b++) { const bit = sg.s + b; if ((bytes[bit >> 3] >> (bit & 7)) & 1) raw += 2 ** b; }
+    if (sg.sg && raw >= 2 ** (sg.l - 1)) raw -= 2 ** sg.l;
+    const v = raw * sg.f + sg.o;
+    parts.push(`${sg.n}=${Number.isInteger(sg.f) ? v : v.toFixed(2)}${sg.u && sg.u !== "%" ? "" : sg.u}`);
+  }
+  return { name: m.name, text: parts.join(" ") };
+}
+function bisect(arr, x) { let lo = 0, hi = arr.length; while (lo < hi) { const mid = (lo + hi) >> 1; arr[mid] < x ? lo = mid + 1 : hi = mid; } return lo; }
+function drawFrames(t) {
+  const tr = traces[traces.length - 1]; const box = $("frames");
+  if (!tr.frames || !tr.frames.length) { box.textContent = "(no frames in trace)"; return; }
+  $("framesrc").textContent = `· ${tr.meta.scenario}`;
+  const end = bisect(tr.frameT, t + 1e-6), begin = Math.max(0, end - 40);
+  const lines = [];
+  for (let k = begin; k < end; k++) {
+    const [ft, id, data, dir] = tr.frames[k]; const d = decodeFrame(tr, id, data);
+    const cls = !d ? "unk" : d.name === "DM1" ? "dm1" : dir;
+    const txt = `${ft.toFixed(3).padStart(8)} ${dir === "tx" ? "ECU→" : "→ECU"} ${id} ${data}  ${d ? d.name.padEnd(15) + d.text : "(not in DBC)"}`;
+    lines.push(`<span class="${cls}">${txt.replace(/</g, "&lt;")}</span>`);
+  }
+  box.innerHTML = lines.join("\n"); box.scrollTop = box.scrollHeight;
+}
+
+// ---------- events ----------
+function buildEvents() {
+  const all = [];
+  traces.forEach((tr, k) => (tr.events || []).forEach(e => all.push({ ...e, k })));
+  all.sort((a, b) => a.t - b.t);
+  $("events").innerHTML = all.map(e => `<div data-t="${e.t}" class="ev-${e.type}">${e.t.toFixed(2).padStart(7)}s ${traces.length > 1 ? `[${"AB"[e.k]}] ` : ""}${e.text}</div>`).join("");
+  $("events").querySelectorAll("div").forEach(d => d.onclick = () => seek(parseFloat(d.dataset.t)));
+}
+
+// ---------- transport ----------
+function render() {
+  traces.forEach(tr => { const i = idx(tr, T); drawScene(tr, i); drawChart(tr, i); drawSide(tr, i); });
+  drawFrames(T);
+  $("clock").textContent = `${T.toFixed(2)} / ${tEnd.toFixed(2)} s`;
+  $("scrub").value = Math.round(T / tEnd * 1000);
+  $("events").querySelectorAll("div").forEach(d => d.classList.toggle("past", parseFloat(d.dataset.t) > T));
+}
+function seek(t) { T = Math.max(0, Math.min(tEnd, t)); render(); }
+function tick(ts) {
+  if (!playing) return;
+  if (lastTs !== null) T += (ts - lastTs) / 1000 * parseFloat($("speed").value);
+  lastTs = ts;
+  if (T >= tEnd) { T = tEnd; setPlaying(false); }
+  render(); requestAnimationFrame(tick);
+}
+function setPlaying(p) { playing = p; lastTs = null; $("play").textContent = p ? "❚❚ Pause" : "▶ Play"; if (p) { if (T >= tEnd) T = 0; requestAnimationFrame(tick); } }
+$("play").onclick = () => setPlaying(!playing);
+$("scrub").oninput = e => seek(e.target.value / 1000 * tEnd);
+const DTC_LEAD_S = 1.0;
+$("jumpdtc").onclick = () => { const ts = traces.flatMap(tr => (tr.dtcs || []).map(d => d.t))
+    .filter(x => x - DTC_LEAD_S > T + 0.1).sort((a, b) => a - b);
+  if (ts.length) seek(Math.max(0, ts[0] - DTC_LEAD_S)); };
+document.addEventListener("keydown", e => {
+  if (!traces.length || e.target.tagName === "SELECT") return;
+  const sp = $("speed");
+  if (e.code === "Space") { e.preventDefault(); setPlaying(!playing); }
+  else if (e.key === "ArrowRight") seek(T + (e.shiftKey ? 1 : 0.01));
+  else if (e.key === "ArrowLeft") seek(T - (e.shiftKey ? 1 : 0.01));
+  else if (e.key === "Home") seek(0); else if (e.key === "End") seek(tEnd);
+  else if (e.key === "]") { sp.selectedIndex = Math.min(sp.options.length - 1, sp.selectedIndex + 1); }
+  else if (e.key === "[") { sp.selectedIndex = Math.max(0, sp.selectedIndex - 1); }
+});
+window.addEventListener("resize", () => { if (traces.length) { traces.forEach(tr => tr.chart.width = tr.chart.parentElement.clientWidth - 20); render(); } });
+
+// ---------- boot: embedded traces, then ?trace= URLs ----------
+(function boot() {
+  const embedded = JSON.parse($("embedded-traces").textContent || "[]");
+  if (embedded.length) { addTraces(embedded); }
+  const urls = new URLSearchParams(location.search).getAll("trace");
+  if (urls.length) Promise.all(urls.map(u => fetch(u).then(r => { if (!r.ok) throw new Error(u + ": " + r.status); return r.json(); })))
+    .then(addTraces).catch(e => { drop.insertAdjacentHTML("beforeend", `<p style="color:var(--bad)">Could not fetch ${e.message}. Opened from file://? Use "Open trace(s)" or drag the files here.</p>`); });
+  if (new URLSearchParams(location.search).get("autoplay") === "1") setTimeout(() => setPlaying(true), 300);
+})();
+</script>
+</body>
+</html>

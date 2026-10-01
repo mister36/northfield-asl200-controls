@@ -1,0 +1,6 @@
+# ASL-200 on a cab-forward diesel chassis. Reference build; no overrides.
+inherits: common.yaml
+name: asl200_diesel_autocar
+description: ASL-200, diesel chassis, hydraulic arm (reference build)
+hardware:
+  chassis: diesel_cabforward

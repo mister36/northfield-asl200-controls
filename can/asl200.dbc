@@ -1,0 +1,83 @@
+VERSION "ASL-200 body controls, Northfield Body Works (fictional)"
+
+NS_ :
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	BA_DEF_DEF_
+	BO_TX_BU_
+
+BS_:
+
+BU_: ENGINE_ECU OPERATOR_CONSOLE ARM_IO_NODE ACTUATOR_DRIVER BODY_CONTROLLER BATTERY_MGMT
+
+BO_ 2566844672 CCVS: 8 ENGINE_ECU
+ SG_ WheelBasedVehicleSpeed : 8|16@1+ (0.00390625,0) [0|250.996] "km/h" BODY_CONTROLLER
+
+BO_ 2566845696 AMB: 8 ENGINE_ECU
+ SG_ AmbientAirTemperature : 24|16@1+ (0.03125,-273) [-273|1735] "degC" BODY_CONTROLLER
+
+BO_ 2566834721 DM1: 8 BODY_CONTROLLER
+ SG_ MalfunctionIndicatorLamp : 6|2@1+ (1,0) [0|3] "" ENGINE_ECU
+ SG_ RedStopLamp : 4|2@1+ (1,0) [0|3] "" ENGINE_ECU
+ SG_ AmberWarningLamp : 2|2@1+ (1,0) [0|3] "" ENGINE_ECU
+ SG_ ProtectLamp : 0|2@1+ (1,0) [0|3] "" ENGINE_ECU
+ SG_ SPN_Low16 : 16|16@1+ (1,0) [0|65535] "" ENGINE_ECU
+ SG_ FMI : 32|5@1+ (1,0) [0|31] "" ENGINE_ECU
+ SG_ SPN_High3 : 37|3@1+ (1,0) [0|7] "" ENGINE_ECU
+ SG_ OccurrenceCount : 40|7@1+ (1,0) [0|127] "" ENGINE_ECU
+
+BO_ 2566852652 JOY_CMD: 8 OPERATOR_CONSOLE
+ SG_ AutoCycleRequest : 0|1@1+ (1,0) [0|1] "" BODY_CONTROLLER
+ SG_ FaultReset : 1|1@1+ (1,0) [0|1] "" BODY_CONTROLLER
+ SG_ JogLift : 8|8@1- (1,0) [-100|100] "%" BODY_CONTROLLER
+ SG_ JogReach : 16|8@1- (1,0) [-100|100] "%" BODY_CONTROLLER
+ SG_ GripRequest : 24|2@1+ (1,0) [0|3] "" BODY_CONTROLLER
+
+BO_ 2566852992 BODY_INPUTS: 8 ARM_IO_NODE
+ SG_ TailgateOpen : 0|1@1+ (1,0) [0|1] "" BODY_CONTROLLER
+ SG_ HopperFull : 1|1@1+ (1,0) [0|1] "" BODY_CONTROLLER
+ SG_ GripperPressure : 8|16@1+ (0.1,0) [0|6553.5] "bar" BODY_CONTROLLER
+
+BO_ 2566853248 ARM_SENSORS: 8 ARM_IO_NODE
+ SG_ LiftSensorVoltage : 0|16@1+ (1,0) [0|5000] "mV" BODY_CONTROLLER
+ SG_ ReachSensorVoltage : 16|16@1+ (1,0) [0|5000] "mV" BODY_CONTROLLER
+
+BO_ 2566853505 ACTUATOR_STATUS: 8 ACTUATOR_DRIVER
+ SG_ LiftActuatorEffort : 0|16@1+ (0.1,0) [0|6553.5] "A_or_bar" BODY_CONTROLLER
+ SG_ ActuatorTemperature : 16|16@1+ (0.03125,-273) [-273|1735] "degC" BODY_CONTROLLER
+
+BO_ 2566853862 BATT_STATUS: 8 BATTERY_MGMT
+ SG_ BatteryTemperature : 0|16@1+ (0.03125,-273) [-273|1735] "degC" BODY_CONTROLLER
+ SG_ StateOfCharge : 16|8@1+ (0.4,0) [0|102] "%" BODY_CONTROLLER
+
+BO_ 2566856737 ARM_CMD: 8 BODY_CONTROLLER
+ SG_ LiftVelocityCmd : 0|16@1- (0.01,0) [-100|100] "%" ACTUATOR_DRIVER
+ SG_ ReachVelocityCmd : 16|16@1- (0.01,0) [-100|100] "%" ACTUATOR_DRIVER
+ SG_ GripCmd : 32|2@1+ (1,0) [0|3] "" ACTUATOR_DRIVER
+
+BO_ 2566856993 ARM_STATE: 8 BODY_CONTROLLER
+ SG_ CycleState : 0|4@1+ (1,0) [0|15] "" ENGINE_ECU
+ SG_ LiftPhase : 4|3@1+ (1,0) [0|7] "" ENGINE_ECU
+ SG_ IlkVehicleSpeedOk : 8|1@1+ (1,0) [0|1] "" ENGINE_ECU
+ SG_ IlkGripSecured : 9|1@1+ (1,0) [0|1] "" ENGINE_ECU
+ SG_ IlkTailgateClosed : 10|1@1+ (1,0) [0|1] "" ENGINE_ECU
+ SG_ SoftLimitActive : 11|1@1+ (1,0) [0|1] "" ENGINE_ECU
+ SG_ StallDetected : 12|1@1+ (1,0) [0|1] "" ENGINE_ECU
+ SG_ CycleCount : 16|16@1+ (1,0) [0|65535] "" ENGINE_ECU
+
+BO_ 2566857249 ARM_POSITION: 8 BODY_CONTROLLER
+ SG_ ArmLiftAngle : 0|16@1- (0.01,0) [-50|250] "deg" ENGINE_ECU
+ SG_ ArmReachPosition : 16|16@1- (0.1,0) [-500|3000] "mm" ENGINE_ECU
+
+CM_ BO_ 2566853248 "Raw ratiometric sensor voltages from the arm I/O node. Scaled to engineering units by the body controller.";
+CM_ SG_ 2566853248 LiftSensorVoltage "Arm lift position sensor, 0-5V ratiometric (P/N 55-1180-0). Valid 250-4750 mV; outside that range is open circuit / short to supply.";
+CM_ SG_ 2566853248 ReachSensorVoltage "Arm reach position sensor, 0.5-4.5V (P/N 55-1192-0). Valid 400-4600 mV.";
+CM_ SG_ 2566853505 LiftActuatorEffort "Hydraulic variants report lift circuit pressure in bar; the electric variant reports actuator current in A.";
+CM_ SG_ 2566856993 CycleState "0=IDLE 1=REACH_OUT 2=GRIP 3=LIFT 4=DUMP 5=LOWER 6=RELEASE 7=RETRACT 8=FAULT_STOP";
+CM_ SG_ 2566856993 IlkVehicleSpeedOk "1 = vehicle speed below the arm-motion limit (motion permitted).";
+CM_ SG_ 2566856993 IlkGripSecured "1 = gripper pressure above threshold for the required dwell (bin secured).";
+CM_ SG_ 2566856993 LiftPhase "0=NONE 1=CLEAR 2=GRIP_RECHECK 3=RAISE";
+
+VAL_ 2566856993 CycleState 0 "IDLE" 1 "REACH_OUT" 2 "GRIP" 3 "LIFT" 4 "DUMP" 5 "LOWER" 6 "RELEASE" 7 "RETRACT" 8 "FAULT_STOP" ;

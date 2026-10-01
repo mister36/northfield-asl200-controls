@@ -1,0 +1,27 @@
+# ASL-200 LR: extended reach boom for set-back cans. The longer boom raises
+# the overturning moment when the truck is moving, so arm motion is inhibited
+# at a lower road speed than the standard arm.
+inherits: common.yaml
+name: asl200_diesel_mack_longreach
+description: ASL-200 LR, diesel chassis, long-reach hydraulic arm
+controls:
+  interlocks:
+    vehicle_speed_limit_mph: 2.0
+  motion:
+    reach_out_mm: 2100.0
+  limits:
+    reach_soft_max_mm: 2300.0
+  sensors:
+    reach:
+      mm_at_v_hi: 2600.0
+  requirements:
+    cycle_time_budget_s: 12.5
+hardware:
+  chassis: diesel_lowcab
+  arm:
+    reach_hard_max_mm: 2400.0
+    bin_mass_kg: 110.0
+  sensors:
+    reach:
+      part_number: 55-1193-0
+      mm_at_v_hi: 2600.0
