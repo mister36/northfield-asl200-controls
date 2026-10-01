@@ -23,9 +23,23 @@ make sil && make viz                 # local sanity check: all green, cold-elect
 | Segment | Ticket | Live input | Backup PR | Run time |
 |---|---|---|---|---|
 | A | - | Slack / Ask Devin question | (answers verified, below) | 2–3 min |
-| B | ASLCTL-142 | ticket text | _fill in after backup run_ | 12–20 min |
-| C | ASLCTL-157 | ticket text + `field_logs/unit4471_2026-01-14_0642.log` | _fill in_ | 15–25 min |
-| D | ASLCTL-163 | ticket text + `docs/eco/ECO-0412.pdf` | _fill in_ | 10–15 min |
+| B | ASLCTL-142 | ticket text | [#8](https://github.com/mister36/northfield-asl200-controls/pull/8) | 12–20 min |
+| C | ASLCTL-157 | ticket text + `field_logs/unit4471_2026-01-14_0642.log` | [#6](https://github.com/mister36/northfield-asl200-controls/pull/6) | 15–25 min |
+| D | ASLCTL-163 | ticket text + `docs/eco/ECO-0412.pdf` | [#5](https://github.com/mister36/northfield-asl200-controls/pull/5) | 10–15 min |
+
+What each backup PR did (all labelled `demo-backup`, CI green, left open - do not merge):
+
+- **B, [#8](https://github.com/mister36/northfield-asl200-controls/pull/8):** the +15% change on shared speeds breaks only electric: the lift overshoots to ~160-162 deg
+  against a 155 deg soft limit, because regen braking limits how fast it can slow down. Fixed with electric-only
+  motion overrides that stay within that braking limit. Cycle time −12.9% to −14.1% on all four variants; no
+  interlock, check or scenario changes.
+- **C, [#6](https://github.com/mister36/northfield-asl200-controls/pull/6):** failing regression committed first, then the fix: before the arm first moves, the stall
+  timer gets extra time scaled by pack temperature (electric: up to +700 ms; others: 0). After first motion the
+  timer is back to 400 ms, and the new `cold_lift_jam` scenario shows a real jam still trips. `cold` now runs on
+  the electric variant too.
+- **D, [#5](https://github.com/mister36/northfield-asl200-controls/pull/5):** separate `*_eco0412` firmware variants (0.5-4.5 V lift calibration) for ASL2-26-04100 onward
+  and retrofits; open/short thresholds kept at 0.25/4.75 V; DBC, I/O map, release notes, short-to-supply
+  scenario and a non-code follow-ups checklist in the PR body.
 
 Live runs take longer than the call allows: start the live session, narrate the first minutes
 (reading code, running the replay), then switch to the backup PR for the result.
