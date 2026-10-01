@@ -1,0 +1,94 @@
+# ASL-200 common parameters. Every variant file inherits these and overrides
+# only what differs. `controls` is compiled into the firmware (params_t);
+# `hardware` describes the physical build and is used only by the SIL plant.
+controls:
+  interlocks:
+    vehicle_speed_limit_mph: 3.0
+    grip_secure_pressure_bar: 80.0
+    grip_secure_time_ms: 300
+    grip_timeout_ms: 2500
+    tailgate_inhibit: true
+    batt_temp_max_c: 60.0
+    ccvs_timeout_ms: 500
+  motion:
+    reach_out_mm: 1500.0
+    reach_speed_mmps: 900.0
+    reach_creep_mmps: 80.0
+    reach_decel_zone_mm: 200.0
+    lift_clear_deg: 25.0
+    grip_recheck_ms: 300
+    dump_angle_deg: 150.0
+    dump_dwell_ms: 600
+    lift_speed_dps: 60.0
+    lower_speed_dps: 70.0
+    lift_accel_dps2: 200.0
+    creep_speed_dps: 10.0
+    decel_zone_deg: 30.0
+    release_time_ms: 400
+    lift_cmd_full_scale_dps: 80.0
+    reach_cmd_full_scale_mmps: 1200.0
+  limits:
+    lift_soft_min_deg: -2.0
+    lift_soft_max_deg: 155.0
+    reach_soft_min_mm: 0.0
+    reach_soft_max_mm: 1700.0
+  stall:
+    stall_timeout_ms: 400
+    stall_min_travel_deg: 1.0
+    stall_min_travel_mm: 10.0
+  sensors:
+    lift:
+      v_lo_mv: 0
+      v_hi_mv: 5000
+      deg_at_v_lo: -20.0
+      deg_at_v_hi: 180.0
+      open_circuit_mv: 250
+      short_circuit_mv: 4750
+    reach:
+      v_lo_mv: 500
+      v_hi_mv: 4500
+      mm_at_v_lo: 0.0
+      mm_at_v_hi: 2000.0
+      open_circuit_mv: 400
+      short_circuit_mv: 4600
+    debounce_ms: 50
+  requirements:
+    cycle_time_budget_s: 14.5
+
+hardware:
+  powertrain: hydraulic
+  chassis: generic
+  arm:
+    lift_hard_min_deg: -5.0
+    lift_hard_max_deg: 162.0
+    reach_hard_max_mm: 1800.0
+    bin_mass_kg: 110.0
+  sensors:
+    lift:
+      part_number: 55-1180-0
+      v_lo_mv: 0
+      v_hi_mv: 5000
+      deg_at_v_lo: -20.0
+      deg_at_v_hi: 180.0
+      noise_mv: 4.0
+      latency_ms: 10
+    reach:
+      part_number: 55-1192-0
+      v_lo_mv: 500
+      v_hi_mv: 4500
+      mm_at_v_lo: 0.0
+      mm_at_v_hi: 2000.0
+      noise_mv: 4.0
+      latency_ms: 10
+  actuator:
+    lift_full_scale_dps: 80.0
+    reach_full_scale_mmps: 1200.0
+    lift_tau_ms: 60
+    lift_accel_limit_dps2: 400.0
+    reach_tau_ms: 50
+    reach_accel_limit_mmps2: 4000.0
+    onset_delay_ms: 80
+    cold_onset_delay_ms: 180
+    cold_rate_factor: 0.85
+    gripper_clamp_bar: 140.0
+    gripper_rate_bar_per_s: 400.0
