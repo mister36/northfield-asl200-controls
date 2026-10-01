@@ -78,8 +78,7 @@ class Scenario:
 SCENARIOS: dict[str, Scenario] = {s.name: s for s in [
     Scenario("normal", "Standard pick at 77F, truck stationary"),
     Scenario("cold", "Cold start at -4F (-20C), first pick of the shift",
-             ambient_c=f_to_c(-4.0), batt_temp_c=-18.0, check_cycle_time=False,
-             variants=("asl200_diesel_autocar", "asl200_cng_peterbilt", "asl200_diesel_mack_longreach")),
+             ambient_c=f_to_c(-4.0), batt_temp_c=-18.0, check_cycle_time=False),
     Scenario("hot", "110F afternoon, hot hydraulic oil / warm pack",
              ambient_c=f_to_c(110.0), batt_temp_c=45.0),
     Scenario("arm_at_limit", "Operator jogs lift into the upper soft limit, then back down",
