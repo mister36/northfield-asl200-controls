@@ -33,7 +33,8 @@ A CCVS timeout (no frame for `ccvs_timeout_ms`) is treated as "vehicle speed unk
 
 | Sensor | Part number | Output | Calibration | Valid window (else DTC) |
 |---|---|---|---|---|
-| Lift angle | 55-1180-0 | 0–5 V ratiometric | 0 V = −20°, 5 V = 180° | 0.20–4.80 V (FMI 4 below / FMI 3 above) |
+| Lift angle | 55-1180-1 (ECO-0412, bodies ≥ ASL2-26-04100) | 0.5–4.5 V | 0.5 V = −20°, 4.5 V = 180° | <0.25 V FMI 4 (open) / >4.75 V FMI 3 (short-to-supply) |
+| Lift angle (legacy) | 55-1180-0 | 0–5 V ratiometric | 0 V = −20°, 5 V = 180° | same diagnostic bands as 55-1180-1 |
 | Reach | 55-1192-0 (LR: 55-1193-0) | 0.5–4.5 V | 0.5 V = 0 mm, 4.5 V = 2000 mm (LR 2600 mm) | 0.40–4.60 V |
 
-Calibration values live in `variants/common.yaml` (`controls.sensors`) and are compiled into `params_t`.
+Lift sensor selection is per-variant via `lift_sensor` (resolved from `variants/sensors.yaml`); `asl200_diesel_autocar_legacy` is the pre-break build. Calibration values compile into `params_t`.

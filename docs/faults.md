@@ -6,8 +6,8 @@ proprietary range. Lookup table used by the tools: `can/faults.yaml`
 
 | SPN | FMI | Name | Condition | Reaction |
 |---|---|---|---|---|
-| 520200 | 4 | Lift position sensor low | Lift sensor below open-circuit threshold for `debounce_ms` | FAULT_STOP |
-| 520200 | 3 | Lift position sensor high | Lift sensor above short threshold for `debounce_ms` | FAULT_STOP |
+| 520200 | 4 | Lift position sensor low | Lift sensor below open-circuit threshold (<250 mV, both 55-1180-0 and -1 per ECO-0412) for `debounce_ms` | FAULT_STOP |
+| 520200 | 3 | Lift position sensor high | Lift sensor above short-to-supply threshold (>4750 mV) for `debounce_ms` | FAULT_STOP |
 | 520201 | 4 / 3 | Reach position sensor low / high | As above, reach sensor | FAULT_STOP |
 | 520210 | 7 | Arm lift not responding | Lift commanded, measured travel < `stall_min_travel_deg` within `stall_timeout_ms` | FAULT_STOP |
 | 520211 | 7 | Arm reach not responding | Reach commanded, travel < `stall_min_travel_mm` within `stall_timeout_ms` | FAULT_STOP |

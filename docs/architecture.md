@@ -9,7 +9,9 @@ through `s->p` (a `const params_t *`, generated from `variants/*.yaml`).
 Per step:
 
 1. `update_sensors()` - range-check and scale the raw lift/reach sensor voltages, low-pass filter,
-   raise sensor DTCs (debounced).
+   raise sensor DTCs (debounced). Lift scaling and fault thresholds come from the fitted sensor's
+   calibration (variant `lift_sensor` → `params_t.sensors.lift`; ECO-0412 selects between
+   55-1180-0 and 55-1180-1 — same code, different params).
 2. Interlocks (`firmware/src/interlocks.c`): `interlock_vehicle_speed()`, `interlock_tailgate()`,
    `interlock_battery_temp()`, `interlock_grip_secured()`.
 3. Mode: jog (operator joystick) or auto-cycle state machine (`step_cycle()`, `step_lift()`).

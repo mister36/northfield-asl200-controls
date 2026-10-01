@@ -46,6 +46,9 @@ See `.agents/skills/triage-field-log/SKILL.md` for the full triage procedure.
 - Firmware is C99, no dynamic allocation, no floating `double`, every tunable comes from `params_t`.
   Never hard-code a threshold in C; add it to `variants/common.yaml` + `variants/schema.json`.
 - Variant differences live in the variant YAML, not in `#ifdef`s or test special cases.
+- A hardware revision that changes sensor scaling or fault thresholds is a variant selection
+  (`lift_sensor` in the variant YAML, catalogued in `variants/sensors.yaml`) — firmware reads the
+  calibration from `params_t`; never hard-code a sensor's voltage range in C.
 - Interlocks are one function each in `firmware/src/interlocks.c`.
 - New DTCs: `firmware/include/faults.h`, `can/faults.yaml`, `docs/faults.md`.
 - CAN changes: `can/asl200.dbc`, `firmware/src/can_io.c`, `docs/io-map.md`, and the unit test in

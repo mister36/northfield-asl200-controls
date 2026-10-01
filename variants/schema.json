@@ -16,6 +16,10 @@
     "description": {
       "type": "string"
     },
+    "lift_sensor": {
+      "type": "string",
+      "description": "Fitted arm lift position sensor part number; resolved from variants/sensors.yaml into controls.sensors.lift and hardware.sensors.lift"
+    },
     "controls": {
       "type": "object",
       "properties": {

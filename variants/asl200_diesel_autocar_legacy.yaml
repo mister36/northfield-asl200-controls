@@ -1,0 +1,9 @@
+# Pre-ECO-0412 fleet build: bodies shipped before serial ASL2-26-04100 carry
+# the legacy 55-1180-0 lift sensor (0-5 V ratiometric) and must keep its
+# calibration - do not flash the ECO-0412 sensor configuration onto them.
+inherits: common.yaml
+name: asl200_diesel_autocar_legacy
+description: ASL-200, diesel chassis, pre-break build (lift sensor 55-1180-0)
+lift_sensor: "55-1180-0"
+hardware:
+  chassis: diesel_cabforward

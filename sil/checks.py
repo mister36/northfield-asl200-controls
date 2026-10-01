@@ -9,6 +9,7 @@ SOFT_LIMIT_TOL_DEG = 0.5
 SOFT_LIMIT_TOL_MM = 10.0
 INTERLOCK_LATENCY_S = 0.15   # CCVS period (100 ms) + one controller step + bus
 MOTION_EPS_PCT = 0.5
+LIFT_REPORT_TOL_DEG = 1.0    # filtered position vs plant truth once settled
 
 
 @dataclass
@@ -67,7 +68,19 @@ def run_checks(trace: dict, scenario: Scenario) -> list[Check]:
     checks.append(Check("soft_limits", not over,
                         f"peak lift {lmax:.2f} deg, peak reach {rmax:.0f} mm" if not over else "; ".join(over)))
 
-    # 3. DTCs: exactly the expected set.
+    # 3. Reported lift angle tracks plant truth at rest: validates the fitted
+    # sensor's scaling calibration end to end (a sensor/software mismatch is
+    # >15 deg even mid-travel; sensor noise and LPF settling stay << 1 deg).
+    SETTLE_STEPS = 30  # 300 ms at rest: filters and sensor latency fully settled
+    at_rest = [i for i in range(SETTLE_STEPS, n)
+               if sig["dtc_spn"][i] == 0 and sig["state"][i] != 8
+               and all(abs(sig["lift_dps"][j]) < 1.0 for j in range(i - SETTLE_STEPS, i + 1))]
+    peak, peak_t = max(((abs(sig["ctrl_lift_deg"][i] - sig["lift_deg"][i]), t[i]) for i in at_rest),
+                       default=(0.0, 0.0))
+    checks.append(Check("lift_scaling", peak <= LIFT_REPORT_TOL_DEG,
+                        f"peak reported-vs-true lift angle error {peak:.2f} deg at t={peak_t:.2f}s"))
+
+    # 4. DTCs: exactly the expected set.
     seen = {(d["spn"], d["fmi"]) for d in trace["dtcs"]}
     unexpected = seen - set(scenario.expect_dtcs)
     missing = set(scenario.expect_dtcs) - seen
@@ -81,7 +94,7 @@ def run_checks(trace: dict, scenario: Scenario) -> list[Check]:
                         "; ".join(detail) if detail else
                         ("no DTCs" if not seen else "expected DTCs: " + ", ".join(f"{s}/{f}" for s, f in sorted(seen)))))
 
-    # 4. Cycle completes, within budget where required.
+    # 5. Cycle completes, within budget where required.
     budget = p["requirements"]["cycle_time_budget_s"]
     ct = trace["summary"].get("cycle_time_s")
     if scenario.expect_cycle_complete:
@@ -95,7 +108,7 @@ def run_checks(trace: dict, scenario: Scenario) -> list[Check]:
         checks.append(Check("cycle_complete", ct is None, "cycle correctly not completed" if ct is None else
                             f"cycle completed in {ct:.2f}s but should have been aborted"))
 
-    # 5. Scenario-specific.
+    # 6. Scenario-specific.
     if scenario.expect_no_lift:
         checks.append(Check("no_lift_without_grip", lmax < 5.0, f"peak lift {lmax:.2f} deg"))
     if scenario.expect_dtcs:

@@ -85,7 +85,8 @@ def main() -> int:
         (out / f"params_{v}.h").write_text(
             HEADER
             + f"#ifndef {guard}\n#define {guard}\n\n#include \"params_types.h\"\n\n"
-            + f"#define ASL200_VARIANT_NAME \"{v}\"\n\n"
+            + f"#define ASL200_VARIANT_NAME \"{v}\"\n"
+            + f"#define ASL200_LIFT_SENSOR_PN \"{cfg['lift_sensor']}\"\n\n"
             + f"static const params_t PARAMS_ACTIVE = {{\n{initializer(cfg['controls'], 4)}\n}};\n\n"
             + f"#endif /* {guard} */\n"
         )
