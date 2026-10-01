@@ -1,0 +1,36 @@
+# ASL-200 body controller diagnostic trouble codes (J1939 DM1).
+# SPNs are in the J1939 proprietary range (520192-524287), FMIs are standard.
+source_address: 0x21   # body controller
+fmi:
+  0: Data valid but above normal operational range - most severe
+  2: Data erratic, intermittent or incorrect
+  3: Voltage above normal, or shorted to high source
+  4: Voltage below normal, or shorted to low source
+  7: Mechanical system not responding or out of adjustment
+spn:
+  520200:
+    name: Arm lift position sensor
+    fmi:
+      3: {text: "Lift sensor signal above valid range (short to supply)", action: "Inspect sensor connector X41 and harness for short to 5 V"}
+      4: {text: "Lift sensor signal below valid range (open circuit)", action: "Inspect sensor connector X41, check 5 V supply and ground"}
+  520201:
+    name: Arm reach position sensor
+    fmi:
+      3: {text: "Reach sensor signal above valid range (short to supply)", action: "Inspect connector X42"}
+      4: {text: "Reach sensor signal below valid range (open circuit)", action: "Inspect connector X42"}
+  520210:
+    name: Arm lift actuator
+    fmi:
+      7: {text: "Arm lift not responding - motion commanded but lift position did not change within the stall timeout", action: "Check for obstruction or mechanical binding, actuator supply and enable; record ambient temperature and cycle count"}
+  520211:
+    name: Arm reach actuator
+    fmi:
+      7: {text: "Arm reach not responding - motion commanded but reach position did not change within the stall timeout", action: "Check boom slide for obstruction and actuator supply"}
+  520220:
+    name: Gripper
+    fmi:
+      7: {text: "Gripper did not reach clamp pressure within the grip timeout", action: "Check can position and gripper hydraulic circuit"}
+  520240:
+    name: Arm lift travel
+    fmi:
+      0: {text: "Lift travel beyond soft limit", action: "Check lift sensor calibration and soft-limit parameters"}
