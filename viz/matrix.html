@@ -67,7 +67,8 @@ function show(k) {
       ${r.dtcs.length ? " · DTCs: " + r.dtcs.map(d => `SPN ${d.spn} FMI ${d.fmi} @ ${d.t.toFixed(2)}s`).join(", ") : ""}</div>
     <ul>${r.checks.map(c => `<li class="${c.passed ? "pass" : "fail"}">${c.passed ? "✓" : "✗"} <b>${c.name}</b>: ${c.detail}</li>`).join("")}</ul>
     ${viewer} ${r.trace ? `· <a href="${r.trace}" download>trace.json</a>` : ""}
-    ${r.plot ? `<img src="${r.plot}" alt="trajectory plot">` : ""}`;
+    ${r.plot ? `· <a href="${r.plot}" target="_blank">plot ↗</a>
+    <a href="${r.plot}" target="_blank" title="open plot"><img src="${r.plot}" alt="trajectory plot"></a>` : ""}`;
 }
 grid.querySelectorAll("td.cell[data-k]").forEach(td => td.onclick = () => show(td.dataset.k));
 const first = data.results.find(r => !r.passed) || data.results[0];

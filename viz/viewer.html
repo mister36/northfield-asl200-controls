@@ -125,9 +125,13 @@ function readFiles(files) {
 }
 $("file").onchange = e => readFiles(e.target.files);
 const drop = $("drop");
-document.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
+document.addEventListener("dragover", e => { e.preventDefault(); e.dataTransfer.dropEffect = "copy"; drop.classList.add("over"); });
 document.addEventListener("dragleave", () => drop.classList.remove("over"));
-document.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("over"); readFiles(e.dataTransfer.files); });
+document.addEventListener("drop", e => {
+  e.preventDefault(); drop.classList.remove("over");
+  if (e.dataTransfer.files.length) readFiles(e.dataTransfer.files);
+  else alert("The drop contained no files (some file managers pass only a path). Use \"Open trace(s)\" instead.");
+});
 $("clear").onclick = () => { traces = []; playing = false; $("main").style.display = "none"; $("transport").style.display = "none";
   drop.style.display = ""; $("clear").style.display = "none"; };
 
@@ -406,8 +410,10 @@ function tick(ts) {
 function setPlaying(p) { playing = p; lastTs = null; $("play").textContent = p ? "❚❚ Pause" : "▶ Play"; if (p) { if (T >= tEnd) T = 0; requestAnimationFrame(tick); } }
 $("play").onclick = () => setPlaying(!playing);
 $("scrub").oninput = e => seek(e.target.value / 1000 * tEnd);
-$("jumpdtc").onclick = () => { const ts = traces.flatMap(tr => (tr.dtcs || []).map(d => d.t)).filter(x => x > T + 0.02).sort((a, b) => a - b);
-  if (ts.length) seek(Math.max(0, ts[0] - 1.0)); };
+const DTC_LEAD_S = 1.0;
+$("jumpdtc").onclick = () => { const ts = traces.flatMap(tr => (tr.dtcs || []).map(d => d.t))
+    .filter(x => x - DTC_LEAD_S > T + 0.1).sort((a, b) => a - b);
+  if (ts.length) seek(Math.max(0, ts[0] - DTC_LEAD_S)); };
 document.addEventListener("keydown", e => {
   if (!traces.length || e.target.tagName === "SELECT") return;
   const sp = $("speed");
