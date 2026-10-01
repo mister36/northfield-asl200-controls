@@ -36,6 +36,12 @@ controls:
     stall_timeout_ms: 400
     stall_min_travel_deg: 1.0
     stall_min_travel_mm: 10.0
+    # Extra time for an axis to start moving from rest with a cold traction pack
+    # (BATT_STATUS only; 0 = none). Linear from 0 at cold_start_full_c to the
+    # full allowance at cold_start_min_c and below.
+    cold_start_allowance_ms: 0
+    cold_start_full_c: 10.0
+    cold_start_min_c: -20.0
   sensors:
     lift:
       v_lo_mv: 0

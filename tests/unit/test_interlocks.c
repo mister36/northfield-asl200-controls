@@ -90,18 +90,67 @@ static void test_stall_monitor(void)
     bool stalled = false;
     stall_monitor_reset(&m);
     for (i = 0; i < 100; i++) {
-        stalled = stall_monitor_update(&m, true, (float)i * 0.2f, 1.0f, 400U, 10U);
+        stalled = stall_monitor_update(&m, true, (float)i * 0.2f, 1.0f, 400U, 0U, 10U);
         CHECK(!stalled);
     }
     for (i = 0; i < 39; i++) {
-        stalled = stall_monitor_update(&m, true, 20.0f, 1.0f, 400U, 10U);
+        stalled = stall_monitor_update(&m, true, 20.0f, 1.0f, 400U, 0U, 10U);
     }
     CHECK(!stalled);
     for (i = 0; i < 5; i++) {
-        stalled = stall_monitor_update(&m, true, 20.0f, 1.0f, 400U, 10U);
+        stalled = stall_monitor_update(&m, true, 20.0f, 1.0f, 400U, 0U, 10U);
     }
     CHECK(stalled);
-    CHECK(!stall_monitor_update(&m, false, 20.0f, 1.0f, 400U, 10U));
+    CHECK(!stall_monitor_update(&m, false, 20.0f, 1.0f, 400U, 0U, 10U));
+}
+
+static void test_stall_monitor_start_allowance(void)
+{
+    stall_monitor_t m;
+    int i;
+    bool stalled = false;
+    stall_monitor_reset(&m);
+    /* At rest: the allowance extends the first window only. */
+    for (i = 0; i < 100; i++) {
+        stalled = stall_monitor_update(&m, true, 0.0f, 1.0f, 400U, 600U, 10U);
+        CHECK(!stalled);
+    }
+    for (i = 0; i < 5; i++) {
+        stalled = stall_monitor_update(&m, true, 0.0f, 1.0f, 400U, 600U, 10U);
+    }
+    CHECK(stalled); /* 1000 ms without travel from rest */
+    stall_monitor_reset(&m);
+    (void)stall_monitor_update(&m, true, 0.0f, 1.0f, 400U, 600U, 10U);
+    CHECK(!stall_monitor_update(&m, true, 2.0f, 1.0f, 400U, 600U, 10U));
+    /* Once moving, a jam trips on the base timeout. */
+    for (i = 0; i < 39; i++) {
+        stalled = stall_monitor_update(&m, true, 2.0f, 1.0f, 400U, 600U, 10U);
+    }
+    CHECK(!stalled);
+    stalled = stall_monitor_update(&m, true, 2.0f, 1.0f, 400U, 600U, 10U);
+    CHECK(stalled);
+}
+
+static void test_stall_start_allowance_temp(void)
+{
+    inputs_t in;
+    params_t p = PARAMS_ACTIVE;
+    p.stall.cold_start_allowance_ms = 700;
+    p.stall.cold_start_full_c = 10.0f;
+    p.stall.cold_start_min_c = -20.0f;
+    base_inputs(&in);
+    CHECK(stall_start_allowance_ms(&in, &p) == 0U); /* no BMS: no allowance */
+    in.batt_valid = true;
+    in.batt_temp_c = 20.0f;
+    CHECK(stall_start_allowance_ms(&in, &p) == 0U);
+    in.batt_temp_c = -5.0f;
+    CHECK(stall_start_allowance_ms(&in, &p) == 350U);
+    in.batt_temp_c = -20.0f;
+    CHECK(stall_start_allowance_ms(&in, &p) == 700U);
+    in.batt_temp_c = -35.0f;
+    CHECK(stall_start_allowance_ms(&in, &p) == 700U);
+    p.stall.cold_start_allowance_ms = 0;
+    CHECK(stall_start_allowance_ms(&in, &p) == 0U);
 }
 
 int main(void)
@@ -112,5 +161,7 @@ int main(void)
     test_soft_limits();
     test_approach_profile();
     test_stall_monitor();
+    test_stall_monitor_start_allowance();
+    test_stall_start_allowance_temp();
     TEST_MAIN_END();
 }

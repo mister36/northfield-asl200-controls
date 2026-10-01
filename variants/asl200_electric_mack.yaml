@@ -7,6 +7,10 @@ description: ASL-200, battery-electric chassis, electric arm actuators
 controls:
   interlocks:
     batt_temp_max_c: 55.0
+  stall:
+    # The lift motor proves holding torque before its brake releases under a
+    # raised bin; with a cold pack (current derate) that takes ~0.6-0.8 s.
+    cold_start_allowance_ms: 700
   motion:
     lower_speed_dps: 70.0
     reach_speed_mmps: 1000.0

@@ -98,26 +98,46 @@ float interlock_soft_limit_reach(float v_mmps, float pos_mm, const params_t *p, 
 void stall_monitor_reset(stall_monitor_t *m)
 {
     m->armed = false;
+    m->moved = false;
     m->timer_ms = 0U;
     m->ref_pos = 0.0f;
 }
 
-bool stall_monitor_update(stall_monitor_t *m, bool commanded, float pos,
-                          float min_travel, uint32_t timeout_ms, uint32_t dt_ms)
+bool stall_monitor_update(stall_monitor_t *m, bool commanded, float pos, float min_travel,
+                          uint32_t timeout_ms, uint32_t start_allowance_ms, uint32_t dt_ms)
 {
     bool stalled = false;
     if (!commanded) {
         stall_monitor_reset(m);
     } else if (!m->armed) {
         m->armed = true;
+        m->moved = false;
         m->ref_pos = pos;
         m->timer_ms = 0U;
     } else if (fabsf(pos - m->ref_pos) >= min_travel) {
+        m->moved = true;
         m->ref_pos = pos;
         m->timer_ms = 0U;
     } else {
+        const uint32_t limit_ms = m->moved ? timeout_ms : (timeout_ms + start_allowance_ms);
         m->timer_ms += dt_ms;
-        stalled = m->timer_ms >= timeout_ms;
+        stalled = m->timer_ms >= limit_ms;
     }
     return stalled;
+}
+
+uint32_t stall_start_allowance_ms(const inputs_t *in, const params_t *p)
+{
+    const float full_c = p->stall.cold_start_full_c;
+    const float min_c = p->stall.cold_start_min_c;
+    const float max_ms = (float)p->stall.cold_start_allowance_ms;
+    float frac = 0.0f;
+    if (!in->batt_valid || (max_ms <= 0.0f) || (in->batt_temp_c >= full_c)) {
+        frac = 0.0f;
+    } else if ((in->batt_temp_c <= min_c) || (full_c <= min_c)) {
+        frac = 1.0f;
+    } else {
+        frac = (full_c - in->batt_temp_c) / (full_c - min_c);
+    }
+    return (uint32_t)((frac * max_ms) + 0.5f);
 }

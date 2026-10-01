@@ -273,6 +273,7 @@ void controller_step(const inputs_t *in, outputs_t *out, state_t *s)
     bool reach_limited = false;
     bool lift_stalled;
     bool reach_stalled;
+    uint32_t start_allowance_ms;
     float lift_v;
     float reach_v;
 
@@ -333,12 +334,13 @@ void controller_step(const inputs_t *in, outputs_t *out, state_t *s)
     out->lift_cmd_pct = clampf((lift_v / p->motion.lift_cmd_full_scale_dps) * 100.0f, -CMD_PCT_MAX, CMD_PCT_MAX);
     out->reach_cmd_pct = clampf((reach_v / p->motion.reach_cmd_full_scale_mmps) * 100.0f, -CMD_PCT_MAX, CMD_PCT_MAX);
 
+    start_allowance_ms = stall_start_allowance_ms(in, p);
     lift_stalled = stall_monitor_update(&s->lift_stall, fabsf(out->lift_cmd_pct) >= STALL_CMD_MIN_PCT, s->lift_deg,
                                         p->stall.stall_min_travel_deg, (uint32_t)p->stall.stall_timeout_ms,
-                                        CONTROLLER_STEP_MS);
+                                        start_allowance_ms, CONTROLLER_STEP_MS);
     reach_stalled = stall_monitor_update(&s->reach_stall, fabsf(out->reach_cmd_pct) >= STALL_CMD_MIN_PCT, s->reach_mm,
                                          p->stall.stall_min_travel_mm, (uint32_t)p->stall.stall_timeout_ms,
-                                         CONTROLLER_STEP_MS);
+                                         start_allowance_ms, CONTROLLER_STEP_MS);
     if (lift_stalled) {
         enter_fault(s, SPN_ARM_LIFT_ACTUATOR, FMI_MECHANICAL_NOT_RESPONDING);
     }

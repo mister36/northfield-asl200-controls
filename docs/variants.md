@@ -16,6 +16,7 @@ Each variant file in `variants/` inherits `common.yaml` and overrides only what 
 | Lift decel zone | 30° | 30° | **36°** | 30° |
 | Battery temp interlock | n/a | n/a | 55 °C | n/a |
 | Stall timeout | 400 ms | 400 ms | 400 ms | 400 ms |
+| Stall cold-start allowance (pack ≤ −20 °C) | n/a | n/a | **700 ms** | n/a |
 | Cycle-time budget | 11.5 s | 11.5 s | 13.5 s | 12.5 s |
 
 Notes

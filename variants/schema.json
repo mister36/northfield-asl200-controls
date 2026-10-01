@@ -172,12 +172,26 @@
             },
             "stall_min_travel_mm": {
               "type": "number"
+            },
+            "cold_start_allowance_ms": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 2000
+            },
+            "cold_start_full_c": {
+              "type": "number"
+            },
+            "cold_start_min_c": {
+              "type": "number"
             }
           },
           "required": [
             "stall_timeout_ms",
             "stall_min_travel_deg",
-            "stall_min_travel_mm"
+            "stall_min_travel_mm",
+            "cold_start_allowance_ms",
+            "cold_start_full_c",
+            "cold_start_min_c"
           ],
           "additionalProperties": false
         },
