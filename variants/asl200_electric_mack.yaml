@@ -8,10 +8,12 @@ controls:
   interlocks:
     batt_temp_max_c: 55.0
   motion:
-    lower_speed_dps: 70.0
-    reach_speed_mmps: 1000.0
-    lift_accel_dps2: 120.0
+    lift_speed_dps: 82.0
+    lower_speed_dps: 82.0
+    reach_speed_mmps: 1250.0
+    lift_accel_dps2: 160.0
     decel_zone_deg: 36.0
+    reach_decel_zone_mm: 300.0
   requirements:
     cycle_time_budget_s: 13.5
 hardware:
