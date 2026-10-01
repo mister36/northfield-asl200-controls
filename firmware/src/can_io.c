@@ -91,6 +91,7 @@ bool can_io_rx(inputs_t *in, const can_frame_t *f)
             in->gripper_pressure_bar = (float)get_u16(d, 1U) * 0.1f;
             break;
         case CAN_ID_ARM_SENSORS:
+            /* Raw millivolts; sensor-specific calibration is in params_t. */
             in->lift_sensor_mv = get_u16(d, 0U);
             in->reach_sensor_mv = get_u16(d, 2U);
             break;

@@ -31,6 +31,7 @@ class Scenario:
     jog: tuple[tuple[float, float, int, int], ...] = ()                  # (t0, t1, lift%, reach%)
     tailgate_open: tuple[tuple[float, float], ...] = ()
     lift_sensor_open_at_s: float | None = None
+    lift_sensor_short_at_s: float | None = None
     gripper_max_bar: float | None = None      # gripper cannot build full clamp pressure
     lift_jam_above_deg: float | None = None   # lift axis seizes once past this angle
     expect_dtcs: frozenset[tuple[int, int]] = field(default_factory=frozenset)
@@ -79,7 +80,9 @@ SCENARIOS: dict[str, Scenario] = {s.name: s for s in [
     Scenario("normal", "Standard pick at 77F, truck stationary"),
     Scenario("cold", "Cold start at -4F (-20C), first pick of the shift",
              ambient_c=f_to_c(-4.0), batt_temp_c=-18.0, check_cycle_time=False,
-             variants=("asl200_diesel_autocar", "asl200_cng_peterbilt", "asl200_diesel_mack_longreach")),
+             variants=("asl200_diesel_autocar", "asl200_cng_peterbilt", "asl200_diesel_mack_longreach",
+                       "asl200_diesel_autocar_eco0412", "asl200_cng_peterbilt_eco0412",
+                       "asl200_diesel_mack_longreach_eco0412")),
     Scenario("hot", "110F afternoon, hot hydraulic oil / warm pack",
              ambient_c=f_to_c(110.0), batt_temp_c=45.0),
     Scenario("arm_at_limit", "Operator jogs lift into the upper soft limit, then back down",
@@ -88,6 +91,10 @@ SCENARIOS: dict[str, Scenario] = {s.name: s for s in [
     Scenario("sensor_dropout", "Lift position sensor connector drops out mid-lift",
              lift_sensor_open_at_s=5.0, duration_s=10.0,
              expect_dtcs=frozenset({(SPN_LIFT_SENSOR, FMI_VOLTAGE_BELOW_NORMAL)}),
+             expect_cycle_complete=False, check_cycle_time=False),
+    Scenario("sensor_short", "Lift position sensor shorts to supply mid-lift",
+             lift_sensor_short_at_s=5.0, duration_s=10.0,
+             expect_dtcs=frozenset({(SPN_LIFT_SENSOR, 3)}),
              expect_cycle_complete=False, check_cycle_time=False),
     Scenario("gripper_not_closed", "Can mis-positioned: gripper never reaches clamp pressure",
              gripper_max_bar=45.0, expect_cycle_complete=False, check_cycle_time=False,

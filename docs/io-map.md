@@ -33,7 +33,18 @@ A CCVS timeout (no frame for `ccvs_timeout_ms`) is treated as "vehicle speed unk
 
 | Sensor | Part number | Output | Calibration | Valid window (else DTC) |
 |---|---|---|---|---|
-| Lift angle | 55-1180-0 | 0–5 V ratiometric | 0 V = −20°, 5 V = 180° | 0.20–4.80 V (FMI 4 below / FMI 3 above) |
+| Lift angle, before ASL2-26-04100 unless retrofitted | 55-1180-0 | 0–5 V ratiometric | 0 V = −20°, 5 V = 180° | 0.25–4.75 V (existing firmware thresholds; FMI 4 below / FMI 3 above) |
+| Lift angle, ASL2-26-04100 onward or service retrofit (ECO-0412) | 55-1180-1 | 0.5–4.5 V ratiometric | 0.5 V = −20°, 4.5 V = 180° | 0.25–4.75 V (FMI 4 below / FMI 3 above) |
 | Reach | 55-1192-0 (LR: 55-1193-0) | 0.5–4.5 V | 0.5 V = 0 mm, 4.5 V = 2000 mm (LR 2600 mm) | 0.40–4.60 V |
 
-Calibration values live in `variants/common.yaml` (`controls.sensors`) and are compiled into `params_t`.
+Calibration values live in `variants/common.yaml` and the `*_eco0412.yaml` overrides
+(`controls.sensors`) and are compiled into `params_t`. Legacy thresholds are preserved from
+the existing code and DBC; the previous 0.20–4.80 V table entry was inconsistent with both.
+
+For 55-1180-1, angle = −20 + (mV − 500) × 200 / 4000. Home (0°) is 900 mV;
+dump (150°) is 3900 mV. The 250–500 and 4500–4750 mV shoulders are outside the
+calibration range but do not trigger electrical DTCs. Values exactly 250 and 4750 mV
+are accepted; diagnostics use strict inequalities and the existing 50 ms debounce.
+Raw ARM_SENSORS remains 1 mV/bit, range 0–5000 mV; ARM_POSITION remains 0.01°/bit.
+No PGN, bit layout, SPN or FMI changes. Reach calibration, mount, pinout and harness are unchanged.
+See [ECO-0412 release notes](release-notes/ECO-0412.md) for build selection.

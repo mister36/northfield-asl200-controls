@@ -65,6 +65,9 @@ cmake --build build-target        # -> asl200_fw_<variant>.elf / .hex
 
 `asl200_diesel_autocar`, `asl200_cng_peterbilt`, `asl200_electric_mack`, `asl200_diesel_mack_longreach`.
 See [docs/variants.md](docs/variants.md).
+ECO-0412 builds for P/N 55-1180-1 append `_eco0412` to each name; select them for
+ASL2-26-04100 onward and earlier-body retrofits. Original names retain 55-1180-0
+calibration. See [release notes](docs/release-notes/ECO-0412.md) before flashing.
 
 ## Notes
 

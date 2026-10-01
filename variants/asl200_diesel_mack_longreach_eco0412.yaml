@@ -1,0 +1,16 @@
+inherits: asl200_diesel_mack_longreach.yaml
+name: asl200_diesel_mack_longreach_eco0412
+description: ASL-200, diesel chassis, long-reach hydraulic arm, ECO-0412 lift sensor (ASL2-26-04100 onward or service retrofit)
+controls:
+  sensors:
+    lift:
+      v_lo_mv: 500
+      v_hi_mv: 4500
+      open_circuit_mv: 250
+      short_circuit_mv: 4750
+hardware:
+  sensors:
+    lift:
+      part_number: 55-1180-1
+      v_lo_mv: 500
+      v_hi_mv: 4500

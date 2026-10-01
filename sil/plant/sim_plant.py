@@ -266,6 +266,8 @@ class SimPlant(PlantInterface):
         self.reach_mv = self._to_mv(self._reach_hist[0], cal_r, "mm")
         if sc.lift_sensor_open_at_s is not None and self.t >= sc.lift_sensor_open_at_s:
             self.lift_mv = max(0, int(round(abs(self.rng.gauss(12.0, 4.0)))))
+        if sc.lift_sensor_short_at_s is not None and self.t >= sc.lift_sensor_short_at_s:
+            self.lift_mv = 5000 - max(0, int(round(abs(self.rng.gauss(12.0, 4.0)))))
 
     def _to_mv(self, value: float, cal: dict, unit: str) -> int:
         lo, hi = cal[f"{unit}_at_v_lo"], cal[f"{unit}_at_v_hi"]

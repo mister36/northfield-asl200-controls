@@ -80,7 +80,7 @@ target_compile_options(asl200_fw_hostcheck PRIVATE ${WARN_FLAGS})
 target_link_libraries(asl200_fw_hostcheck PRIVATE asl200_core)
 
 enable_testing()
-foreach(t test_scaling test_filters test_interlocks test_can_io)
+foreach(t test_scaling test_filters test_interlocks test_can_io test_eco0412)
   add_executable(${t} tests/unit/${t}.c)
   target_compile_definitions(${t} PRIVATE PARAMS_HEADER="params_asl200_diesel_autocar.h")
   target_compile_options(${t} PRIVATE ${WARN_FLAGS})

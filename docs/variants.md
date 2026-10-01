@@ -1,6 +1,7 @@
 # Variant matrix
 
 Each variant file in `variants/` inherits `common.yaml` and overrides only what differs.
+ECO-0412 files inherit their chassis variant, which in turn inherits `common.yaml`.
 `controls:` is compiled into the firmware; `hardware:` is used only by the SIL plant model.
 
 | | diesel_autocar | cng_peterbilt | electric_mack | diesel_mack_longreach |
@@ -25,3 +26,19 @@ Notes
 - The electric lift motor brakes regeneratively into the traction pack; its usable braking is lower
   than a hydraulic circuit's, hence the gentler accel limit and longer decel zone.
 - The CNG chassis has a smaller PTO pump (`hardware.actuator.*_full_scale_*`).
+
+## Lift sensor effectivity (ECO-0412)
+
+| Body / installed sensor | Variant selection |
+|---|---|
+| Through ASL2-26-04099, 55-1180-0 (including WIP) | Existing chassis variant above |
+| ASL2-26-04100 onward, 55-1180-1 | Same chassis variant with `_eco0412` suffix |
+| Earlier body retrofitted with 55-1180-1 | Same chassis variant with `_eco0412` suffix |
+
+The four ECO builds change only lift transfer endpoints (500/4500 mV), identify
+55-1180-1 in the hardware blob, and explicitly use the ECO diagnostic thresholds
+(250/4750 mV). Angle endpoints stay −20/180°. All chassis tuning and reach parameters
+are inherited. Both sensor families run every applicable scenario in CI.
+Firmware does not receive the body serial or detect the sensor family over CAN;
+manufacturing/service must select the image from the installed sensor and chassis.
+See [release notes](release-notes/ECO-0412.md).

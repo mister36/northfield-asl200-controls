@@ -29,6 +29,14 @@ static void test_rx_sensors_and_joystick(void)
     CHECK(can_io_rx(&in, &s));
     CHECK(in.lift_sensor_mv == 2500U);
     CHECK(in.reach_sensor_mv == 1000U);
+    s.data[0] = 0x84U;
+    s.data[1] = 0x03U;
+    CHECK(can_io_rx(&in, &s));
+    CHECK(in.lift_sensor_mv == 900U);
+    s.data[0] = 0x3CU;
+    s.data[1] = 0x0FU;
+    CHECK(can_io_rx(&in, &s));
+    CHECK(in.lift_sensor_mv == 3900U);
     CHECK(can_io_rx(&in, &j));
     CHECK(in.auto_cycle_request);
     CHECK(!in.fault_reset);

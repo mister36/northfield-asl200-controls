@@ -18,3 +18,15 @@ aborts the cycle (release + retract) without a DTC.
 
 Faults latch until the operator presses fault reset (accepted once the position sensors read valid). Active DTCs set the
 red stop and amber warning lamps in DM1.
+
+## ECO-0412 lift sensor
+
+P/N 55-1180-1 uses 500–4500 mV for −20…180°. Its electrical diagnostic bands are
+strictly below 250 mV (SPN 520200/FMI 4, open or short to ground) and strictly above
+4750 mV (SPN 520200/FMI 3, short to supply), after 50 ms. Motion is inhibited on the
+first invalid reading; the DTC and FAULT_STOP latch after debounce. A valid reading
+alone does not clear the fault; reset is rejected while the sensor is invalid.
+Legacy builds retain their existing 250/4750 mV thresholds. The 500/4500 mV calibration
+endpoints are not fault thresholds. Use the installed part number to select the
+firmware before interpreting raw voltage; mixed fleets and earlier-body retrofits
+require different lift calibration. Reach diagnostics are unchanged.

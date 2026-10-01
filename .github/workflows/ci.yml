@@ -5,7 +5,7 @@
 # SIL matrix (C firmware <-> virtual CAN <-> plant model) for every variant in
 # parallel. The report job merges the per-variant results into one
 # variant x scenario table, an offline dashboard (matrix.html + animated trace
-# viewers) and, on PRs, a sticky comment with plots/GIFs of anything that failed.
+# viewers) and, on PRs, a sticky comment with plots/GIFs of failures and sensor cases.
 #
 # In a CODESYS shop this module would be IEC 61131-3 Structured Text; the
 # harness and workflow are the same.
@@ -54,7 +54,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        variant: [asl200_diesel_autocar, asl200_cng_peterbilt, asl200_electric_mack, asl200_diesel_mack_longreach]
+        variant:
+          - asl200_diesel_autocar
+          - asl200_cng_peterbilt
+          - asl200_electric_mack
+          - asl200_diesel_mack_longreach
+          - asl200_diesel_autocar_eco0412
+          - asl200_cng_peterbilt_eco0412
+          - asl200_electric_mack_eco0412
+          - asl200_diesel_mack_longreach_eco0412
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -78,7 +86,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        variant: [asl200_diesel_autocar, asl200_cng_peterbilt, asl200_electric_mack, asl200_diesel_mack_longreach]
+        variant:
+          - asl200_diesel_autocar
+          - asl200_cng_peterbilt
+          - asl200_electric_mack
+          - asl200_diesel_mack_longreach
+          - asl200_diesel_autocar_eco0412
+          - asl200_cng_peterbilt_eco0412
+          - asl200_electric_mack_eco0412
+          - asl200_diesel_mack_longreach_eco0412
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -104,7 +120,7 @@ jobs:
     if: always() && needs.sil.result != 'skipped'
     runs-on: ubuntu-24.04
     permissions:
-      contents: write        # pushes failure media to the ci-media branch
+      contents: write        # pushes selected media to the ci-media branch
       pull-requests: write   # sticky PR comment
     steps:
       - uses: actions/checkout@v4
@@ -120,8 +136,8 @@ jobs:
           cat out/summary.md >> "$GITHUB_STEP_SUMMARY"
       - name: Dashboard (matrix.html + per-case animated viewers)
         run: python3 viz/build.py --out out
-      - name: Render media for failing cases
-        run: python3 tools/ci_media.py --out out --media out/media --max 4
+      - name: Render failures and representative sensor cases
+        run: python3 tools/ci_media.py --out out --media out/media --max 4 --include-passing
       - name: Upload dashboard
         uses: actions/upload-artifact@v4
         with:
@@ -162,7 +178,7 @@ jobs:
             let body = `${marker}\n## ASL-200 SIL matrix\n\n` + fs.readFileSync("out/summary.md", "utf8");
             const media = JSON.parse(fs.readFileSync("out/media/index.json", "utf8") || "[]");
             if (media.length && process.env.MEDIA_BASE) {
-              body += "\n#### Failing cases\n";
+              body += "\n#### Selected cases (failures first)\n";
               for (const m of media) {
                 body += `\n**\`${m.variant}\` / \`${m.scenario}\`** - ${m.reason}\n\n`;
                 if (m.gif) body += `![${m.variant} ${m.scenario} animation](${process.env.MEDIA_BASE}/${m.gif})\n\n`;

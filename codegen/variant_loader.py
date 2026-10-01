@@ -32,16 +32,29 @@ def list_variants() -> list[str]:
     return sorted(p.stem for p in VARIANT_DIR.glob("asl200_*.yaml"))
 
 
-def load_variant(name: str) -> dict:
-    path = VARIANT_DIR / f"{name}.yaml"
+def _load_inherited(path: Path, chain: tuple[Path, ...] = ()) -> dict:
+    if path in chain:
+        raise ValueError(f"Cyclic variant inheritance: {path.name}")
     raw = yaml.safe_load(path.read_text())
     base_name = raw.pop("inherits", None)
-    merged = raw
     if base_name:
-        base = yaml.safe_load((VARIANT_DIR / base_name).read_text())
-        merged = _deep_merge(base, raw)
+        base = _load_inherited(VARIANT_DIR / base_name, (*chain, path))
+        return _deep_merge(base, raw)
+    return raw
+
+
+def load_variant(name: str) -> dict:
+    merged = _load_inherited(VARIANT_DIR / f"{name}.yaml")
     schema = json.loads(SCHEMA_PATH.read_text())
     jsonschema.validate(merged, schema)
+    for axis, unit in (("lift", "deg"), ("reach", "mm")):
+        control = merged["controls"]["sensors"][axis]
+        hardware = merged["hardware"]["sensors"][axis]
+        if control["v_hi_mv"] <= control["v_lo_mv"]:
+            raise ValueError(f"{name}: {axis} sensor voltage span must be positive")
+        for key in ("v_lo_mv", "v_hi_mv", f"{unit}_at_v_lo", f"{unit}_at_v_hi"):
+            if control[key] != hardware[key]:
+                raise ValueError(f"{name}: {axis} sensor {key} differs between controls and hardware")
     return merged
 
 
