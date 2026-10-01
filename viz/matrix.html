@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ASL-200 SIL matrix</title>
+<style>
+  :root { --bg:#0e1117; --panel:#161b22; --line:#2a3140; --fg:#d8dee9; --dim:#7b8496; --ok:#a3be8c; --bad:#bf616a; --acc:#88c0d0; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:13px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  header { padding:12px 18px; border-bottom:1px solid var(--line); background:var(--panel); display:flex; gap:16px; align-items:baseline; }
+  header h1 { margin:0; font-size:15px; }
+  .dim { color:var(--dim); }
+  .total { font-weight:700; } .total.fail { color:var(--bad); } .total.pass { color:var(--ok); }
+  main { display:grid; grid-template-columns:auto 1fr; gap:18px; padding:16px 18px; align-items:start; }
+  table { border-collapse:separate; border-spacing:4px; }
+  th { font-weight:500; color:var(--dim); text-align:left; padding:2px 6px; }
+  th.sc { writing-mode:vertical-rl; transform:rotate(180deg); text-align:left; height:120px; }
+  td.cell { width:64px; height:44px; border-radius:5px; text-align:center; cursor:pointer; font-weight:700; border:2px solid transparent; }
+  td.cell.pass { background:#25331f; color:var(--ok); } td.cell.fail { background:#4a2228; color:#ffb3ba; }
+  td.cell.na { background:#161b22; color:#3b4252; cursor:default; font-weight:400; }
+  td.cell.sel { border-color:var(--acc); }
+  td.cell small { display:block; font-weight:400; font-size:10px; opacity:.85; }
+  .detail { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:12px; min-height:300px; }
+  .detail h2 { margin:0 0 8px; font-size:14px; }
+  .detail img { max-width:100%; border-radius:4px; border:1px solid var(--line); margin-top:8px; }
+  .detail ul { padding-left:18px; margin:6px 0; }
+  .detail li.fail { color:var(--bad); } .detail li.pass { color:var(--dim); }
+  a { color:var(--acc); }
+  .legend { margin-top:10px; font-size:11px; }
+</style>
+</head>
+<body>
+<header><h1>ASL-200 · SIL variant × scenario matrix</h1><span id="total" class="total"></span><span class="dim" id="meta"></span></header>
+<main>
+  <div>
+    <table id="grid"></table>
+    <div class="legend dim">cell = one closed-loop SIL run (C firmware ⇄ virtual CAN ⇄ plant model)<br>
+      number = auto-cycle time · grey = scenario not applicable to the variant · click a cell for detail</div>
+  </div>
+  <div class="detail" id="detail"><span class="dim">Select a cell.</span></div>
+</main>
+<script id="matrix-data" type="application/json">{"results": [], "scenarios": [], "variants": []}</script>
+<script>
+"use strict";
+const data = JSON.parse(document.getElementById("matrix-data").textContent);
+const by = {}; data.results.forEach(r => by[r.variant + "|" + r.scenario] = r);
+const nFail = data.results.filter(r => !r.passed).length;
+const tot = document.getElementById("total");
+tot.textContent = `${data.results.length - nFail}/${data.results.length} passed` + (nFail ? ` · ${nFail} FAILED` : "");
+tot.className = "total " + (nFail ? "fail" : "pass");
+document.getElementById("meta").textContent = data.generated ? `· ${data.generated}` : "";
+const grid = document.getElementById("grid");
+grid.innerHTML = `<tr><th></th>${data.scenarios.map(s => `<th class="sc">${s}</th>`).join("")}</tr>` +
+  data.variants.map(v => `<tr><th>${v}</th>${data.scenarios.map(s => {
+    const r = by[v + "|" + s];
+    if (!r) return `<td class="cell na">–</td>`;
+    const ct = r.cycle_time_s ? `<small>${r.cycle_time_s.toFixed(1)}s</small>` : "";
+    return `<td class="cell ${r.passed ? "pass" : "fail"}" data-k="${v}|${s}">${r.passed ? "PASS" : "FAIL"}${ct}</td>`;
+  }).join("")}</tr>`).join("");
+function show(k) {
+  const r = by[k]; grid.querySelectorAll(".sel").forEach(e => e.classList.remove("sel"));
+  grid.querySelector(`[data-k="${k}"]`).classList.add("sel");
+  const viewer = r.viewer ? `<a href="${r.viewer}" target="_blank">open animated trace viewer ↗</a>` : "";
+  document.getElementById("detail").innerHTML = `
+    <h2>${r.variant} / ${r.scenario} — <span style="color:${r.passed ? "var(--ok)" : "var(--bad)"}">${r.passed ? "PASS" : "FAIL"}</span></h2>
+    <div class="dim">peak lift ${r.peak_lift_deg.toFixed(2)}° · cycle ${r.cycle_time_s ? r.cycle_time_s.toFixed(2) + " s" : "n/a"}
+      ${r.dtcs.length ? " · DTCs: " + r.dtcs.map(d => `SPN ${d.spn} FMI ${d.fmi} @ ${d.t.toFixed(2)}s`).join(", ") : ""}</div>
+    <ul>${r.checks.map(c => `<li class="${c.passed ? "pass" : "fail"}">${c.passed ? "✓" : "✗"} <b>${c.name}</b>: ${c.detail}</li>`).join("")}</ul>
+    ${viewer} ${r.trace ? `· <a href="${r.trace}" download>trace.json</a>` : ""}
+    ${r.plot ? `<img src="${r.plot}" alt="trajectory plot">` : ""}`;
+}
+grid.querySelectorAll("td.cell[data-k]").forEach(td => td.onclick = () => show(td.dataset.k));
+const first = data.results.find(r => !r.passed) || data.results[0];
+if (first) show(first.variant + "|" + first.scenario);
+</script>
+</body>
+</html>
