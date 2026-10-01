@@ -6,5 +6,5 @@ description: ASL-200, CNG chassis, hydraulic arm (lower PTO flow)
 hardware:
   chassis: cng_conventional
   actuator:
-    lift_full_scale_dps: 76.0
-    reach_full_scale_mmps: 1150.0
+    lift_full_scale_dps: 105.0
+    reach_full_scale_mmps: 1440.0

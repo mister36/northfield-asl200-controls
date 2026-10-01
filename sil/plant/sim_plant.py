@@ -61,10 +61,11 @@ class Axis:
         self.idle_time = 0.0
         self.jammed = False
 
-    def start_delay(self, loaded: bool) -> float:
+    def start_delay(self, loaded: bool, raising: bool) -> float:
         if not self.electric:
             return self.onset
-        prove = self.prove_loaded if (loaded and self.axis == "lift") else self.prove_unloaded
+        # Holding torque must be proven before the brake releases under a raised load.
+        prove = self.prove_loaded if (loaded and raising and self.axis == "lift") else self.prove_unloaded
         return self.brake_release + prove / self.derate
 
     def step(self, cmd_pct: float, loaded: bool, dt: float) -> None:
@@ -72,7 +73,7 @@ class Axis:
         if self.mode == "stopped":
             if commanded:
                 self.mode = "starting"
-                self.timer = self.start_delay(loaded)
+                self.timer = self.start_delay(loaded, cmd_pct > 0.0)
         elif self.mode == "starting":
             if not commanded:
                 self.mode = "stopped"
@@ -96,7 +97,9 @@ class Axis:
             target = cmd_pct / 100.0 * self.full_scale * self.rate_factor
         dv = (target - self.vel) * min(1.0, dt / self.tau)
         speeding_up = abs(target) > abs(self.vel) and (target * self.vel >= 0.0)
-        limit = self.accel * (max(self.derate, 0.5) if self.electric else 1.0)
+        limit = self.accel
+        if self.electric and speeding_up:
+            limit *= max(self.derate, 0.5)
         if self.electric and not speeding_up and self.regen_power > 0.0 and abs(self.vel) > 1e-3:
             limit = min(limit, self.regen_power / abs(self.vel))
         dv = max(-limit * dt, min(limit * dt, dv))
@@ -155,6 +158,7 @@ class SimPlant(PlantInterface):
             "lift_mv": self.lift_mv, "reach_mv": self.reach_mv,
             "auto_request": self.auto_held,
             "lift_actuator": self.lift.mode,
+            "effort": self._effort(),
         }
 
     def tick(self, t_s: float, dt_s: float) -> list[can.Message]:
@@ -190,6 +194,11 @@ class SimPlant(PlantInterface):
     def _operator(self, t: float) -> None:
         sc = self.scenario
         self.fault_reset = False
+        if sc.joy_script:
+            auto, reset, _, _, _ = sc.joy_at(t)
+            self.auto_held = bool(auto)
+            self.fault_reset = bool(reset)
+            return
         if not sc.auto_cycle or self.cycle_done:
             self.auto_held = False
             return
@@ -280,7 +289,8 @@ class SimPlant(PlantInterface):
         if ms % 20 == 0:
             lift_j, reach_j = sc.jog_at(t)
             out.append(("JOY_CMD", {"AutoCycleRequest": int(self.auto_held), "FaultReset": int(self.fault_reset),
-                                    "JogLift": lift_j, "JogReach": reach_j, "GripRequest": 0}))
+                                    "JogLift": lift_j, "JogReach": reach_j,
+                                    "GripRequest": sc.joy_at(t)[4] if sc.joy_script else 0}))
             out.append(("BODY_INPUTS", {"TailgateOpen": int(sc.tailgate_at(t)), "HopperFull": 0,
                                         "GripperPressure": round(self.grip_bar + self.rng.gauss(0.0, 0.3), 1)
                                         if self.grip_bar > 0.5 else 0.0}))

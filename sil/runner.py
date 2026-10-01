@@ -18,6 +18,7 @@ from .scenarios import SCENARIOS, Scenario
 DT_S = 0.010
 STATE_NAMES = ["IDLE", "REACH_OUT", "GRIP", "LIFT", "DUMP", "LOWER", "RELEASE", "RETRACT", "FAULT_STOP"]
 TRACE_VERSION = 1
+CONTROLLER_TX_IDS = {dbc.frame_id(n) for n in ("ARM_CMD", "ARM_STATE", "ARM_POSITION", "DM1")}
 
 
 def seed_for(variant: str, scenario: str) -> int:
@@ -41,10 +42,12 @@ def run(variant: str, scenario: Scenario | str, build_dir: Path | None = None, s
 
     names = ["t", "lift_deg", "lift_dps", "reach_mm", "lift_cmd_pct", "reach_cmd_pct", "grip_cmd", "grip_bar",
              "state", "lift_phase", "speed_mph", "tailgate_open", "ilk_speed_ok", "ilk_grip_secured",
-             "soft_limit_active", "stall_detected", "ctrl_lift_deg", "lift_mv", "auto_request", "dtc_spn"]
+             "soft_limit_active", "stall_detected", "ctrl_lift_deg", "lift_mv", "auto_request", "dtc_spn",
+             "effort"]
     sig: dict[str, list] = {k: [] for k in names}
     events: list[dict] = []
     dtcs: list[dict] = []
+    active_dtc = None
     frames: list[can.Message] = []
     state = 0
     cycle_count0 = None
@@ -61,9 +64,10 @@ def run(variant: str, scenario: Scenario | str, build_dir: Path | None = None, s
                 decoded = dbc.decode(msg.arbitration_id, msg.data)
                 if decoded and decoded[0] == "DM1":
                     d = dbc.dm1_dtc(decoded[1])
-                    if d and not any(x["spn"] == d[0] and x["fmi"] == d[1] for x in dtcs):
+                    if d and (active_dtc is None or active_dtc[:2] != d[:2]):
                         dtcs.append({"t": t, "spn": d[0], "fmi": d[1], "oc": d[2]})
                         events.append({"t": t, "type": "dtc", "text": f"DTC SPN {d[0]} FMI {d[1]}"})
+                    active_dtc = d
             tr = plant.truth()
             st = plant.ctrl_state
             new_state = int(st.get("CycleState", 0))
@@ -92,6 +96,7 @@ def run(variant: str, scenario: Scenario | str, build_dir: Path | None = None, s
                 "ctrl_lift_deg": round(float(plant.ctrl_pos.get("ArmLiftAngle", 0.0)), 2),
                 "lift_mv": tr["lift_mv"], "auto_request": int(tr["auto_request"]),
                 "dtc_spn": plant.dm1_active[0] if plant.dm1_active else 0,
+                "effort": round(tr["effort"], 1),
             }
             for key in names:
                 sig[key].append(row[key])
@@ -104,10 +109,14 @@ def run(variant: str, scenario: Scenario | str, build_dir: Path | None = None, s
         "meta": {"variant": variant, "scenario": sc.name, "description": sc.description, "seed": seed,
                  "dt_s": DT_S, "ambient_c": round(sc.ambient_c, 2),
                  "battery_c": sc.battery_temp() if prm["hardware"]["powertrain"] == "electric" else None,
-                 "powertrain": prm["hardware"]["powertrain"], "params": prm, "state_names": STATE_NAMES},
+                 "powertrain": prm["hardware"]["powertrain"], "params": prm, "state_names": STATE_NAMES,
+                 "effort_unit": "A" if prm["hardware"]["powertrain"] == "electric" else "bar",
+                 "source": "sil", "dbc": dbc.layout()},
         "signals": sig,
         "events": events,
         "dtcs": dtcs,
+        "frames": [[round(m.timestamp, 3), f"{m.arbitration_id:08X}", bytes(m.data).hex().upper(),
+                    "tx" if m.arbitration_id in CONTROLLER_TX_IDS else "rx"] for m in frames],
         "summary": {"cycle_time_s": cycle_time, "final_state": STATE_NAMES[state],
                     "peak_lift_deg": max(sig["lift_deg"]), "frames": len(frames)},
     }
@@ -126,17 +135,27 @@ def write_candump(frames: list[can.Message], path: Path, channel: str = "can0", 
             fh.write(f"({t0 + m.timestamp:.6f}) {channel} {m.arbitration_id:08X}#{bytes(m.data).hex().upper()}\n")
 
 
+def trace_path(out_dir: Path, variant: str, scenario: str) -> Path:
+    return out_dir / variant / f"{scenario}.trace.json"
+
+
+def save_trace(trace: dict, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(trace, separators=(",", ":")))
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--variant", required=True, choices=params_mod.variants())
     ap.add_argument("--scenario", required=True, choices=sorted(SCENARIOS))
-    ap.add_argument("--out", type=Path, default=Path("out/traces"))
+    ap.add_argument("--out", type=Path, default=Path("out"))
     ap.add_argument("--candump", action="store_true", help="also write the bus log in candump format")
     args = ap.parse_args()
-    args.out.mkdir(parents=True, exist_ok=True)
-    stem = f"{args.variant}__{args.scenario}"
-    trace = run(args.variant, args.scenario, candump_path=(args.out / f"{stem}.log") if args.candump else None)
-    (args.out / f"{stem}.json").write_text(json.dumps(trace, separators=(",", ":")))
+    stem = f"{args.variant}/{args.scenario}"
+    path = trace_path(args.out, args.variant, args.scenario)
+    trace = run(args.variant, args.scenario, candump_path=path.with_suffix("").with_suffix(".log") if args.candump else None)
+    save_trace(trace, path)
+    print(f"trace: {path}")
     for c in trace["checks"]:
         print(f"  [{'PASS' if c['passed'] else 'FAIL'}] {c['name']}: {c['detail']}")
     print(f"{stem}: {'PASS' if trace['passed'] else 'FAIL'}")

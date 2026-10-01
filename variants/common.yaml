@@ -12,21 +12,21 @@ controls:
     ccvs_timeout_ms: 500
   motion:
     reach_out_mm: 1500.0
-    reach_speed_mmps: 900.0
-    reach_creep_mmps: 80.0
+    reach_speed_mmps: 1200.0
+    reach_creep_mmps: 100.0
     reach_decel_zone_mm: 200.0
     lift_clear_deg: 25.0
     grip_recheck_ms: 300
     dump_angle_deg: 150.0
-    dump_dwell_ms: 600
-    lift_speed_dps: 60.0
-    lower_speed_dps: 70.0
+    dump_dwell_ms: 500
+    lift_speed_dps: 80.0
+    lower_speed_dps: 90.0
     lift_accel_dps2: 200.0
-    creep_speed_dps: 10.0
+    creep_speed_dps: 12.0
     decel_zone_deg: 30.0
-    release_time_ms: 400
-    lift_cmd_full_scale_dps: 80.0
-    reach_cmd_full_scale_mmps: 1200.0
+    release_time_ms: 300
+    lift_cmd_full_scale_dps: 110.0
+    reach_cmd_full_scale_mmps: 1500.0
   limits:
     lift_soft_min_deg: -2.0
     lift_soft_max_deg: 155.0
@@ -53,7 +53,7 @@ controls:
       short_circuit_mv: 4600
     debounce_ms: 50
   requirements:
-    cycle_time_budget_s: 14.5
+    cycle_time_budget_s: 11.5
 
 hardware:
   powertrain: hydraulic
@@ -81,8 +81,8 @@ hardware:
       noise_mv: 4.0
       latency_ms: 10
   actuator:
-    lift_full_scale_dps: 80.0
-    reach_full_scale_mmps: 1200.0
+    lift_full_scale_dps: 110.0
+    reach_full_scale_mmps: 1500.0
     lift_tau_ms: 60
     lift_accel_limit_dps2: 400.0
     reach_tau_ms: 50

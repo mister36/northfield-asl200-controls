@@ -15,7 +15,7 @@ controls:
     reach:
       mm_at_v_hi: 2600.0
   requirements:
-    cycle_time_budget_s: 15.5
+    cycle_time_budget_s: 12.5
 hardware:
   chassis: diesel_lowcab
   arm:

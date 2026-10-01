@@ -37,6 +37,13 @@ class Scenario:
     expect_cycle_complete: bool = True
     check_cycle_time: bool = True
     expect_no_lift: bool = False
+    variants: tuple[str, ...] | None = None   # None = every variant
+    # Scripted operator console: (t, auto, reset, jog_lift%, jog_reach%, grip) steps.
+    # When set, it replaces the built-in operator model (used for log replays).
+    joy_script: tuple[tuple[float, int, int, int, int, int], ...] = ()
+
+    def applies_to(self, variant: str) -> bool:
+        return self.variants is None or variant in self.variants
 
     def speed_at(self, t: float) -> float:
         mph = 0.0
@@ -45,7 +52,17 @@ class Scenario:
                 mph = v
         return mph
 
+    def joy_at(self, t: float) -> tuple[int, int, int, int, int]:
+        cur = (0, 0, 0, 0, 0)
+        for t0, *row in self.joy_script:
+            if t >= t0:
+                cur = tuple(row)
+        return cur
+
     def jog_at(self, t: float) -> tuple[int, int]:
+        if self.joy_script:
+            _, _, lift, reach, _ = self.joy_at(t)
+            return lift, reach
         for t0, t1, lift, reach in self.jog:
             if t0 <= t < t1:
                 return lift, reach
@@ -61,7 +78,8 @@ class Scenario:
 SCENARIOS: dict[str, Scenario] = {s.name: s for s in [
     Scenario("normal", "Standard pick at 77F, truck stationary"),
     Scenario("cold", "Cold start at -4F (-20C), first pick of the shift",
-             ambient_c=f_to_c(-4.0), batt_temp_c=-18.0, check_cycle_time=False),
+             ambient_c=f_to_c(-4.0), batt_temp_c=-18.0, check_cycle_time=False,
+             variants=("asl200_diesel_autocar", "asl200_cng_peterbilt", "asl200_diesel_mack_longreach")),
     Scenario("hot", "110F afternoon, hot hydraulic oil / warm pack",
              ambient_c=f_to_c(110.0), batt_temp_c=45.0),
     Scenario("arm_at_limit", "Operator jogs lift into the upper soft limit, then back down",

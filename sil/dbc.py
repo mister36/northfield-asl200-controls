@@ -38,3 +38,13 @@ def dm1_dtc(signals: dict) -> tuple[int, int, int] | None:
     if spn == 0:
         return None
     return spn, int(signals["FMI"]), int(signals["OccurrenceCount"])
+
+
+def layout() -> list[dict]:
+    """Compact signal layout (for the browser viewer's frame decoder)."""
+    out = []
+    for m in database().messages:
+        sigs = [{"n": s.name, "s": s.start, "l": s.length, "sg": bool(s.is_signed), "f": float(s.scale),
+                 "o": float(s.offset), "u": s.unit or ""} for s in m.signals]
+        out.append({"id": f"{m.frame_id:08X}", "name": m.name, "sender": (m.senders or [""])[0], "signals": sigs})
+    return out
