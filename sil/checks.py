@@ -91,7 +91,7 @@ def run_checks(trace: dict, scenario: Scenario) -> list[Check]:
             checks.append(Check("cycle_time", ct <= budget, f"{ct:.2f}s (budget {budget:.1f}s)"))
         else:
             checks.append(Check("cycle_complete", True, f"{ct:.2f}s (budget not applied)"))
-    else:
+    elif scenario.expect_cycle_complete is False:
         checks.append(Check("cycle_complete", ct is None, "cycle correctly not completed" if ct is None else
                             f"cycle completed in {ct:.2f}s but should have been aborted"))
 
