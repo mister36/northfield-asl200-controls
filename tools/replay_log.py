@@ -90,7 +90,7 @@ def scenario_from_log(log: Path, name: str = "field_replay") -> Scenario:
         name=name, description=f"Conditions and operator inputs replayed from {log.name}",
         ambient_c=c["ambient_c"] if c["ambient_c"] is not None else 20.0, batt_temp_c=c["battery_c"],
         duration_s=c["duration_s"], auto_cycle=False, vehicle_speed_mph=tuple(c["vehicle_speed_mph"]) or ((0.0, 0.0),),
-        joy_script=tuple(c["joy_script"]), expect_cycle_complete=False, check_cycle_time=False)
+        joy_script=tuple(c["joy_script"]), expect_cycle_complete=None, check_cycle_time=False)
 
 
 def open_loop(frames: list[candump.LoggedFrame], variant: str, t0: float) -> list[tuple[float, int, bytes]]:

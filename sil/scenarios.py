@@ -34,7 +34,7 @@ class Scenario:
     gripper_max_bar: float | None = None      # gripper cannot build full clamp pressure
     lift_jam_above_deg: float | None = None   # lift axis seizes once past this angle
     expect_dtcs: frozenset[tuple[int, int]] = field(default_factory=frozenset)
-    expect_cycle_complete: bool = True
+    expect_cycle_complete: bool | None = True    # None: operator-driven, not judged
     check_cycle_time: bool = True
     expect_no_lift: bool = False
     variants: tuple[str, ...] | None = None   # None = every variant
